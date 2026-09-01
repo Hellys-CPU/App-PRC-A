@@ -1,0 +1,251 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0f1117;
+  color: #e5e7eb;
+}
+
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  padding: 24px;
+}
+
+/* ---------- Login ---------- */
+.auth-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 16px;
+}
+.auth-card {
+  background: #1a1d29;
+  border-radius: 16px;
+  padding: 32px 24px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.auth-card h1 { text-align: center; font-size: 26px; margin-bottom: 4px; color: #fff; }
+.subtitle { text-align: center; color: #9ca3af; margin-bottom: 24px; font-size: 14px; }
+
+.mode-switch {
+  display: flex;
+  background: #0f1117;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+.mode-switch button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mode-switch button.active { background: #2563eb; color: #fff; }
+
+.auth-card input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: 1px solid #2d3142;
+  background: #0f1117;
+  color: #fff;
+  font-size: 15px;
+}
+.auth-card input:focus { outline: none; border-color: #2563eb; }
+
+.primary-button {
+  width: 100%;
+  padding: 15px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary-button:disabled { opacity: 0.6; cursor: not-allowed; }
+.primary-button:hover:not(:disabled) { background: #1d4ed8; }
+
+.secondary-button {
+  padding: 15px;
+  background: #2d3142;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+}
+
+.error-text { color: #f87171; font-size: 13px; margin-bottom: 12px; text-align: center; }
+.success-text { color: #34d399; font-size: 13px; margin-bottom: 12px; text-align: center; }
+
+/* ---------- Driver Home ---------- */
+.driver-home { padding: 20px; max-width: 480px; margin: 0 auto; }
+.driver-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.driver-header h2 { font-size: 20px; color: #fff; }
+.logout-button, .back-button {
+  background: none;
+  border: 1px solid #2d3142;
+  color: #9ca3af;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.status-buttons { display: flex; flex-direction: column; gap: 14px; }
+.status-button {
+  border: none;
+  border-radius: 14px;
+  padding: 22px;
+  min-height: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  cursor: pointer;
+  color: #fff;
+  text-align: left;
+}
+.status-label { font-size: 17px; font-weight: 700; }
+.status-time { font-size: 12px; opacity: 0.85; margin-top: 6px; }
+
+.history-link {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  background: none;
+  border: 1px solid #2d3142;
+  color: #60a5fa;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ---------- Camera ---------- */
+.camera-screen { max-width: 480px; margin: 0 auto; padding: 16px; }
+.camera-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.camera-header h3 { color: #fff; font-size: 16px; }
+.camera-preview {
+  width: 100%;
+  border-radius: 14px;
+  background: #000;
+  max-height: 60vh;
+  object-fit: cover;
+}
+.capture-button {
+  width: 100%;
+  margin-top: 16px;
+  padding: 18px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.confirm-actions { display: flex; gap: 12px; margin-top: 16px; }
+.confirm-actions .primary-button { flex: 1; }
+
+/* ---------- History ---------- */
+.history-screen { max-width: 480px; margin: 0 auto; padding: 16px; }
+.history-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.history-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #1a1d29;
+  border-radius: 12px;
+  padding: 12px;
+}
+.history-thumb { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
+.history-status { font-weight: 700; color: #fff; font-size: 14px; }
+.history-time { color: #9ca3af; font-size: 12px; margin-top: 4px; }
+.empty-state { color: #9ca3af; text-align: center; padding: 24px; }
+
+/* ---------- Admin ---------- */
+.admin-container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.admin-header h1 { color: #fff; font-size: 22px; }
+.header-actions { display: flex; gap: 10px; }
+.header-actions button {
+  background: #1a1d29;
+  border: 1px solid #2d3142;
+  color: #e5e7eb;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cards { display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
+.card {
+  background: #1a1d29;
+  border-radius: 14px;
+  padding: 20px 28px;
+  flex: 1;
+  min-width: 140px;
+  text-align: center;
+}
+.card h3 { font-size: 32px; color: #60a5fa; }
+.card p { color: #9ca3af; font-size: 13px; margin-top: 6px; }
+
+.admin-table { width: 100%; border-collapse: collapse; background: #1a1d29; border-radius: 12px; overflow: hidden; }
+.admin-table th, .admin-table td { padding: 14px; text-align: left; border-bottom: 1px solid #2d3142; }
+.admin-table th { color: #9ca3af; font-size: 12px; text-transform: uppercase; }
+.admin-table td { color: #e5e7eb; font-size: 14px; }
+.contact-cell a { margin-right: 12px; font-size: 18px; text-decoration: none; }
+
+.motorista-form {
+  background: #1a1d29;
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+}
+.motorista-form label { color: #9ca3af; font-size: 13px; margin-bottom: 6px; margin-top: 10px; }
+.motorista-form input {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #2d3142;
+  background: #0f1117;
+  color: #fff;
+  margin-bottom: 4px;
+}
+.motorista-form .primary-button { margin-top: 20px; }
