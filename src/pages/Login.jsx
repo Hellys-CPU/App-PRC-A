@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { supabase, phoneToInternalEmail, cleanPhone } from '../supabase';
+import { supabase, cpfToInternalEmail, cleanCpf } from '../supabase';
 
 export default function Login() {
-  const [mode, setMode] = useState('phone'); // 'phone' (motorista) | 'email' (admin)
+  const [mode, setMode] = useState('cpf'); // 'cpf' (motorista) | 'email' (admin)
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -13,12 +13,12 @@ export default function Login() {
     setError('');
     setLoading(true);
 
-    const email = mode === 'phone' ? phoneToInternalEmail(identifier) : identifier;
+    const email = mode === 'cpf' ? cpfToInternalEmail(identifier) : identifier;
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
 
     setLoading(false);
     if (authError) {
-      setError(mode === 'phone' ? 'Telefone ou senha inválidos.' : 'Email ou senha inválidos.');
+      setError(mode === 'cpf' ? 'CPF ou senha inválidos.' : 'Email ou senha inválidos.');
     }
   }
 
@@ -31,8 +31,8 @@ export default function Login() {
         <div className="mode-switch">
           <button
             type="button"
-            className={mode === 'phone' ? 'active' : ''}
-            onClick={() => { setMode('phone'); setIdentifier(''); setError(''); }}
+            className={mode === 'cpf' ? 'active' : ''}
+            onClick={() => { setMode('cpf'); setIdentifier(''); setError(''); }}
           >
             Sou Motorista
           </button>
@@ -46,12 +46,14 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleLogin}>
-          {mode === 'phone' ? (
+          {mode === 'cpf' ? (
             <input
-              type="tel"
-              placeholder="Telefone (ex: 11999998888)"
+              type="text"
+              inputMode="numeric"
+              placeholder="CPF (somente números)"
               value={identifier}
-              onChange={(e) => setIdentifier(cleanPhone(e.target.value))}
+              onChange={(e) => setIdentifier(cleanCpf(e.target.value))}
+              maxLength={11}
               required
             />
           ) : (

@@ -154,6 +154,7 @@ export default function AdminDashboard() {
       <header className="admin-header">
         <h1>Painel Administrativo</h1>
         <div className="header-actions">
+          <button onClick={() => navigate('/nova-viagem')}>Nova Viagem</button>
           <button onClick={() => navigate('/motoristas')}>Motoristas</button>
           <button className="logout-button" onClick={handleLogout}>Sair</button>
         </div>

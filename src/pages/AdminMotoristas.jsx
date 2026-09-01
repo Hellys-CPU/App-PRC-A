@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 
 export default function AdminMotoristas() {
-  const [form, setForm] = useState({ fullName: '', phone: '', plate: '', password: '' });
+  const [form, setForm] = useState({ fullName: '', cpf: '', phone: '', plate: '', password: '' });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const navigate = useNavigate();
@@ -28,8 +28,8 @@ export default function AdminMotoristas() {
       return;
     }
 
-    setMessage({ type: 'success', text: `Motorista cadastrado! Login (telefone): ${data.loginPhone}` });
-    setForm({ fullName: '', phone: '', plate: '', password: '' });
+    setMessage({ type: 'success', text: `Motorista cadastrado! Login (CPF): ${data.loginCpf}` });
+    setForm({ fullName: '', cpf: '', phone: '', plate: '', password: '' });
   }
 
   return (
@@ -47,13 +47,23 @@ export default function AdminMotoristas() {
           required
         />
 
-        <label>Telefone / WhatsApp</label>
+        <label>CPF (será o login do motorista)</label>
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="Somente números"
+          value={form.cpf}
+          onChange={(e) => setForm({ ...form, cpf: e.target.value.replace(/\D/g, '').slice(0, 11) })}
+          maxLength={11}
+          required
+        />
+
+        <label>Telefone / WhatsApp (opcional, para contato)</label>
         <input
           type="tel"
           placeholder="Ex: 11999998888"
           value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          required
+          onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, '') })}
         />
 
         <label>Placa do veículo</label>

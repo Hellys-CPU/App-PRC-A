@@ -12,11 +12,15 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   },
 });
 
-// Converte um telefone (só números) no "email técnico" usado internamente
-// pelo Supabase Auth. O motorista nunca vê nem usa esse email.
-export function phoneToInternalEmail(phone) {
-  const clean = String(phone).replace(/\D/g, '');
+// Converte um CPF (só números) no "email técnico" usado internamente
+// pelo Supabase Auth. O motorista nunca vê nem usa esse email, loga só com CPF.
+export function cpfToInternalEmail(cpf) {
+  const clean = String(cpf).replace(/\D/g, '');
   return `${clean}@drivers.internal`;
+}
+
+export function cleanCpf(cpf) {
+  return String(cpf).replace(/\D/g, '').slice(0, 11);
 }
 
 export function cleanPhone(phone) {

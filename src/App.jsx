@@ -5,6 +5,7 @@ import { supabase } from './supabase';
 import Login from './pages/Login.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import AdminMotoristas from './pages/AdminMotoristas.jsx';
+import AdminNovaViagem from './pages/AdminNovaViagem.jsx';
 import DriverHome from './pages/DriverHome.jsx';
 import DriverCamera from './pages/DriverCamera.jsx';
 import DriverHistory from './pages/DriverHistory.jsx';
@@ -57,6 +58,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<AdminDashboard />} />
         <Route path="/motoristas" element={<AdminMotoristas />} />
+        <Route path="/nova-viagem" element={<AdminNovaViagem />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     );

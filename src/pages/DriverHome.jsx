@@ -13,34 +13,61 @@ const STATUSES = [
 export default function DriverHome() {
   const [lastTimes, setLastTimes] = useState({});
   const [profile, setProfile] = useState(null);
+  const [trip, setTrip] = useState(null);
+  const [loadingTrip, setLoadingTrip] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
+
+    const channel = supabase
+      .channel('driver_trips_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'trips' }, () => loadData())
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
   }, []);
 
   async function loadData() {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData?.user) return;
+    const driverId = userData.user.id;
 
     const { data: profileData } = await supabase
       .from('profiles')
       .select('full_name')
-      .eq('id', userData.user.id)
+      .eq('id', driverId)
       .maybeSingle();
     setProfile(profileData);
 
-    const { data } = await supabase
-      .from('trip_stages')
-      .select('status, recorded_at, trips!inner(driver_id)')
-      .eq('trips.driver_id', userData.user.id)
-      .order('recorded_at', { ascending: false });
+    // Busca a viagem atual do motorista: atribuída ou em andamento (a mais recente)
+    const { data: tripData } = await supabase
+      .from('trips')
+      .select('id, origin, destination, status, created_at')
+      .eq('driver_id', driverId)
+      .in('status', ['assigned', 'in_progress'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    const times = {};
-    (data || []).forEach((row) => {
-      if (!times[row.status]) times[row.status] = row.recorded_at;
-    });
-    setLastTimes(times);
+    setTrip(tripData || null);
+    setLoadingTrip(false);
+
+    if (tripData) {
+      const { data } = await supabase
+        .from('trip_stages')
+        .select('status, recorded_at')
+        .eq('trip_id', tripData.id)
+        .order('recorded_at', { ascending: false });
+
+      const times = {};
+      (data || []).forEach((row) => {
+        if (!times[row.status]) times[row.status] = row.recorded_at;
+      });
+      setLastTimes(times);
+    } else {
+      setLastTimes({});
+    }
   }
 
   function formatTime(iso) {
@@ -58,24 +85,46 @@ export default function DriverHome() {
       <header className="driver-header">
         <div>
           <h2>Olá, {profile?.full_name || 'Motorista'}</h2>
-          <p className="subtitle">Toque em uma etapa para registrar</p>
+          <p className="subtitle">
+            {trip ? 'Toque em uma etapa para registrar' : 'Aguardando viagem'}
+          </p>
         </div>
         <button className="logout-button" onClick={handleLogout}>Sair</button>
       </header>
 
-      <div className="status-buttons">
-        {STATUSES.map((s) => (
-          <button
-            key={s.key}
-            className="status-button"
-            style={{ backgroundColor: s.color }}
-            onClick={() => navigate(`/camera/${s.key}`)}
-          >
-            <span className="status-label">{s.label}</span>
-            <span className="status-time">{formatTime(lastTimes[s.key])}</span>
-          </button>
-        ))}
-      </div>
+      {loadingTrip && <p className="empty-state">Carregando...</p>}
+
+      {!loadingTrip && !trip && (
+        <div className="no-trip-box">
+          <p>Você ainda não tem nenhuma viagem atribuída.</p>
+          <p className="subtitle">Aguarde o time administrativo atribuir sua próxima viagem.</p>
+        </div>
+      )}
+
+      {trip && (
+        <>
+          <div className="current-trip-box">
+            <span className="trip-route">{trip.origin} → {trip.destination}</span>
+            <span className={`trip-badge ${trip.status === 'in_progress' ? 'badge-active' : 'badge-assigned'}`}>
+              {trip.status === 'in_progress' ? 'Em andamento' : 'Viagem atribuída'}
+            </span>
+          </div>
+
+          <div className="status-buttons">
+            {STATUSES.map((s) => (
+              <button
+                key={s.key}
+                className="status-button"
+                style={{ backgroundColor: s.color }}
+                onClick={() => navigate(`/camera/${s.key}`)}
+              >
+                <span className="status-label">{s.label}</span>
+                <span className="status-time">{formatTime(lastTimes[s.key])}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       <button className="history-link" onClick={() => navigate('/historico')}>
         Ver Histórico Completo

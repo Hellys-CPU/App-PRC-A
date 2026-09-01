@@ -75,24 +75,26 @@ export default function DriverCamera() {
       const { data: userData } = await supabase.auth.getUser();
       const driverId = userData.user.id;
 
-      // Busca uma viagem em andamento ou cria uma nova
-      let { data: openTrip } = await supabase
+      // Busca a viagem atribuída pelo admin (assigned) ou já em andamento.
+      // O motorista NUNCA cria viagem, só o time administrativo.
+      let { data: currentTrip } = await supabase
         .from('trips')
-        .select('id')
+        .select('id, status')
         .eq('driver_id', driverId)
-        .eq('status', 'in_progress')
+        .in('status', ['assigned', 'in_progress'])
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      let tripId = openTrip?.id;
-      if (!tripId) {
-        const { data: newTrip, error: tripErr } = await supabase
-          .from('trips')
-          .insert({ driver_id: driverId, origin: 'A definir', destination: 'A definir' })
-          .select('id')
-          .single();
-        if (tripErr) throw tripErr;
-        tripId = newTrip.id;
+      if (!currentTrip) {
+        throw new Error('Nenhuma viagem atribuída. Aguarde o time administrativo atribuir uma viagem.');
+      }
+
+      const tripId = currentTrip.id;
+
+      // Primeira etapa registrada muda a viagem de "assigned" para "in_progress"
+      if (currentTrip.status === 'assigned') {
+        await supabase.from('trips').update({ status: 'in_progress' }).eq('id', tripId);
       }
 
       const { data: stage, error: stageErr } = await supabase
