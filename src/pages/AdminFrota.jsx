@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
+import { useToast } from '../components/Toast.jsx';
 
 const VEHICLE_TYPES = [
   { value: 'toco', label: 'Toco (1 placa)' },
@@ -16,12 +16,17 @@ function daysUntil(dateStr) {
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
+function typeLabelShort(value) {
+  return VEHICLE_TYPES.find((t) => t.value === value)?.label.split(' (')[0] || value;
+}
+
 export default function AdminFrota() {
   const [vehicles, setVehicles] = useState([]);
   const [form, setForm] = useState({ plate: '', plateReboque: '', vehicleType: 'toco', model: '', year: '', crlvValidade: '' });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
-  const navigate = useNavigate();
+  const [editingId, setEditingId] = useState(null);
+  const toast = useToast();
 
   useEffect(() => { loadVehicles(); }, []);
 
@@ -119,16 +124,15 @@ export default function AdminFrota() {
       <h2>Veículos Cadastrados</h2>
       <table className="admin-table">
         <thead>
-          <tr><th>Tipo</th><th>Placa(s)</th><th>Modelo</th><th>Ano</th><th>CRLV</th><th>Status</th></tr>
+          <tr><th>Tipo</th><th>Placa(s)</th><th>Modelo</th><th>Ano</th><th>CRLV</th><th>Status</th><th></th></tr>
         </thead>
         <tbody>
           {vehicles.map((v) => {
             const days = daysUntil(v.crlv_validade);
             const expiring = days != null && days <= 30;
-            const typeLabel = VEHICLE_TYPES.find((t) => t.value === v.vehicle_type)?.label.split(' (')[0] || v.vehicle_type;
             return (
               <tr key={v.id}>
-                <td>{typeLabel}</td>
+                <td>{typeLabelShort(v.vehicle_type)}</td>
                 <td>{v.plate}{v.plate_reboque ? ` / ${v.plate_reboque}` : ''}</td>
                 <td>{v.model || '-'}</td>
                 <td>{v.year || '-'}</td>
@@ -142,14 +146,103 @@ export default function AdminFrota() {
                     {v.active ? 'Ativo' : 'Inativo'}
                   </button>
                 </td>
+                <td>
+                  <button className="secondary-button" onClick={() => setEditingId(editingId === v.id ? null : v.id)}>
+                    {editingId === v.id ? 'Fechar' : 'Editar'}
+                  </button>
+                </td>
               </tr>
             );
           })}
           {vehicles.length === 0 && (
-            <tr><td colSpan="6" className="empty-state">Nenhum veículo cadastrado.</td></tr>
+            <tr><td colSpan="7" className="empty-state">Nenhum veículo cadastrado.</td></tr>
           )}
         </tbody>
       </table>
+
+      {editingId && (
+        <EditVehiclePanel
+          vehicle={vehicles.find((v) => v.id === editingId)}
+          onClose={() => setEditingId(null)}
+          onSaved={() => { setEditingId(null); loadVehicles(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditVehiclePanel({ vehicle, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    vehicleType: vehicle.vehicle_type,
+    plate: vehicle.plate,
+    plateReboque: vehicle.plate_reboque || '',
+    model: vehicle.model || '',
+    year: vehicle.year || '',
+    crlvValidade: vehicle.crlv_validade || '',
+  });
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
+  const needsReboque = form.vehicleType === 'carreta';
+
+  async function handleSave() {
+    if (needsReboque && !form.plateReboque.trim()) {
+      toast('Carreta exige a placa do reboque.', 'error');
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from('vehicles').update({
+      vehicle_type: form.vehicleType,
+      plate: form.plate.toUpperCase().trim(),
+      plate_reboque: needsReboque ? form.plateReboque.toUpperCase().trim() : null,
+      model: form.model || null,
+      year: form.year ? Number(form.year) : null,
+      crlv_validade: form.crlvValidade || null,
+    }).eq('id', vehicle.id);
+    setSaving(false);
+
+    if (error) {
+      const msg = error.message.includes('duplicate') ? 'Já existe um veículo com esta placa.' : error.message;
+      toast(msg, 'error');
+      return;
+    }
+    toast('Veículo atualizado!', 'success');
+    onSaved();
+  }
+
+  return (
+    <div className="motorista-form" style={{ marginTop: 20, maxWidth: 460 }}>
+      <h2 style={{ marginTop: 0 }}>Editando: {vehicle.plate}</h2>
+
+      <label>Tipo de veículo</label>
+      <select value={form.vehicleType} onChange={(e) => setForm({ ...form, vehicleType: e.target.value })}>
+        {VEHICLE_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+      </select>
+
+      <label>{needsReboque ? 'Placa do cavalo' : 'Placa'}</label>
+      <input value={form.plate} onChange={(e) => setForm({ ...form, plate: e.target.value.toUpperCase() })} />
+
+      {needsReboque && (
+        <>
+          <label>Placa do reboque/carreta</label>
+          <input value={form.plateReboque} onChange={(e) => setForm({ ...form, plateReboque: e.target.value.toUpperCase() })} />
+        </>
+      )}
+
+      <label>Modelo</label>
+      <input value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} />
+
+      <label>Ano</label>
+      <input type="number" value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })} />
+
+      <label>Validade do CRLV</label>
+      <input type="date" value={form.crlvValidade} onChange={(e) => setForm({ ...form, crlvValidade: e.target.value })} />
+
+      <div className="trip-actions" style={{ marginTop: 16 }}>
+        <button className="secondary-button" onClick={onClose}>Cancelar</button>
+        <button className="primary-button" onClick={handleSave} disabled={saving}>
+          {saving ? 'Salvando...' : 'Salvar Alterações'}
+        </button>
+      </div>
     </div>
   );
 }

@@ -12,6 +12,8 @@ const STATUSES = [
   { key: 'parada_eventual', label: 'Parada Eventual', color: '#b8492b' },
 ];
 
+import { sendOrQueuePing, flushPingQueue, pendingPingCount } from '../lib/pingQueue.js';
+
 const PING_INTERVAL_MS = 3 * 60 * 1000; // a cada 3 minutos, enquanto o app estiver aberto
 
 export default function DriverHome() {
@@ -33,6 +35,8 @@ export default function DriverHome() {
   }, []);
 
   // Rastreamento por intervalo: só roda com viagem em andamento e o app aberto nesta tela.
+  const [pendingPings, setPendingPings] = useState(0);
+
   useEffect(() => {
     if (!trip || trip.status !== 'in_progress' || !navigator.geolocation) return;
 
@@ -41,21 +45,37 @@ export default function DriverHome() {
         async (pos) => {
           const { data: userData } = await supabase.auth.getUser();
           if (!userData?.user) return;
-          await supabase.from('location_pings').insert({
+          await sendOrQueuePing({
             driver_id: userData.user.id,
             trip_id: trip.id,
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
           });
+          setPendingPings(pendingPingCount());
         },
         () => {},
         { timeout: 8000 }
       );
     }
 
+    async function tryFlush() {
+      await flushPingQueue();
+      setPendingPings(pendingPingCount());
+    }
+
     sendPing();
+    tryFlush();
+    setPendingPings(pendingPingCount());
+
     const interval = setInterval(sendPing, PING_INTERVAL_MS);
-    return () => clearInterval(interval);
+    const flushInterval = setInterval(tryFlush, 30 * 1000);
+    window.addEventListener('online', tryFlush);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(flushInterval);
+      window.removeEventListener('online', tryFlush);
+    };
   }, [trip?.id, trip?.status]);
 
   async function loadData() {
@@ -143,6 +163,12 @@ export default function DriverHome() {
               {trip.status === 'in_progress' ? 'Em andamento' : 'Viagem atribuída'}
             </span>
           </div>
+
+          {pendingPings > 0 && (
+            <p className="offline-notice">
+              📡 Sem conexão — {pendingPings} posição(ões) guardada(s) no celular, serão enviadas quando a internet voltar.
+            </p>
+          )}
 
           <div className="status-buttons">
             {STATUSES.map((s) => (

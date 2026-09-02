@@ -7,13 +7,13 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root, [data-theme="dark"] {
-  --ink: #000000;
-  --panel: #17181a;
-  --panel-raised: #212224;
-  --line: #333333;
-  --text: #d4d4d4;
-  --text-dim: #8a8a8a;
-  --text-strong: #f4f4f4;
+  --ink: #15171c;
+  --panel: #1e212a;
+  --panel-raised: #282c37;
+  --line: #383d4a;
+  --text: #d6d8dd;
+  --text-dim: #8b909c;
+  --text-strong: #f5f6f8;
 
   --amber: #f46101;
   --amber-strong: #d05300;
@@ -23,7 +23,7 @@
   --assigned: #4f80b8;
   --brand-text: #f4f4f4;
 
-  --shadow: 0 10px 30px rgba(0,0,0,0.5);
+  --shadow: 0 10px 30px rgba(0,0,0,0.45);
 }
 
 [data-theme="light"] {
@@ -795,3 +795,123 @@ h2 {
 .kanban-board::-webkit-scrollbar-thumb { background: var(--line); }
 .kanban-board::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
 .kanban-board { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+
+/* ---------- Aviso de fila offline (motorista) ---------- */
+.offline-notice {
+  background: rgba(224, 57, 63, 0.1);
+  border: 1px solid var(--alert);
+  color: var(--alert);
+  padding: 10px 14px;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+/* ---------- Edição de permissões (Admin) ---------- */
+.override-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: normal;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+.override-checkbox input { width: auto; margin: 0; }
+
+.permission-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  padding: 12px;
+  margin-bottom: 4px;
+}
+.permission-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+.permission-item.disabled { color: var(--text-dim); cursor: not-allowed; }
+.permission-item input { width: auto; margin: 0; }
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 28px 0 14px;
+}
+.section-header-row h2 { margin: 0; }
+
+/* ---------- Programação em Massa ---------- */
+.mass-step {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.mass-batch-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.mass-batch-fields label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+.mass-batch-fields input, .mass-batch-fields select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--text-strong);
+  font-size: 14px;
+}
+
+.mass-route-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.mass-route-card {
+  background: var(--ink);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--amber);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.mass-route-card strong { color: var(--text-strong); font-size: 13px; }
+.mass-route-card span { color: var(--text-dim); font-size: 11px; margin-bottom: 6px; }
+.mass-route-card label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; }
+.mass-route-card input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text-strong);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.admin-table select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--text);
+  font-size: 13px;
+}

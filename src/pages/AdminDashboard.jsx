@@ -4,8 +4,8 @@ import { supabase } from '../supabase';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import Brand from '../components/Brand.jsx';
 import { useToast } from '../components/Toast.jsx';
-import { useAdminRole, canAccess } from '../hooks/useAdminRole.js';
 import AdminNav from '../components/AdminNav.jsx';
+import { useAdminRole, pageAllowed } from '../hooks/useAdminRole.js';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -72,8 +72,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const { permissions } = useAdminRole();
   const toast = useToast();
-  const { role } = useAdminRole();
 
   useEffect(() => {
     loadData();
@@ -271,7 +271,14 @@ export default function AdminDashboard() {
         <div className="card"><h3 style={stats.lateTrips > 0 ? { color: 'var(--alert)' } : undefined}>{stats.lateTrips}</h3><p>Viagens Atrasadas</p></div>
       </div>
 
-      <h2>Viagens</h2>
+      <div className="section-header-row">
+        <h2 style={{ margin: 0 }}>Viagens</h2>
+        {pageAllowed(permissions, 'nova-viagem') && (
+          <button className="primary-button" style={{ width: 'auto', padding: '10px 18px' }} onClick={() => navigate('/nova-viagem')}>
+            + Nova Viagem
+          </button>
+        )}
+      </div>
       {loading && <p className="empty-state">Carregando...</p>}
 
       {!loading && (

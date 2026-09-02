@@ -46,7 +46,7 @@ export default function AdminFinanceiro() {
 
   async function markPaid(entry) {
     await supabase.from('financial_entries').update({ status: 'pago', paid_at: new Date().toISOString() }).eq('id', entry.id);
-    toast('Marcado como pago.', 'success');
+    toast(tab === 'receber' ? 'Recebimento confirmado!' : 'Pagamento marcado como feito.', 'success');
     loadEntries();
   }
 
@@ -99,7 +99,13 @@ export default function AdminFinanceiro() {
       </div>
 
       {tab === 'pagar' && (
-        <form onSubmit={handleAddPayable} className="motorista-form" style={{ marginBottom: 28 }}>
+        <>
+          <p className="subtitle" style={{ textAlign: 'left', marginBottom: 12 }}>
+            Viagens feitas em rotas cadastradas (com pagamento ao motorista definido em
+            Configurações) já entram aqui sozinhas. Use este formulário só pra viagens avulsas,
+            sem rota cadastrada.
+          </p>
+          <form onSubmit={handleAddPayable} className="motorista-form" style={{ marginBottom: 28 }}>
           <label>Viagem</label>
           <select value={form.tripId} onChange={(e) => setForm({ ...form, tripId: e.target.value })} required>
             <option value="">Selecione a viagem</option>
@@ -120,6 +126,7 @@ export default function AdminFinanceiro() {
             {saving ? 'Lançando...' : 'Lançar Pagamento'}
           </button>
         </form>
+        </>
       )}
 
       <h2>{tab === 'receber' ? 'Contas a Receber (Clientes)' : 'Contas a Pagar (Motoristas)'}</h2>
@@ -152,7 +159,7 @@ export default function AdminFinanceiro() {
               <td>{e.due_date ? new Date(e.due_date).toLocaleDateString('pt-BR') : '-'}</td>
               <td>
                 <span className={`trip-badge ${e.status === 'pago' ? 'badge-done' : 'badge-assigned'}`}>
-                  {e.status === 'pago' ? 'Pago' : 'Pendente'}
+                  {e.status === 'pago' ? (tab === 'receber' ? 'Recebido' : 'Pago') : 'Pendente'}
                 </span>
               </td>
               <td style={{ fontSize: 12, color: 'var(--text-dim)' }}>
@@ -160,7 +167,9 @@ export default function AdminFinanceiro() {
               </td>
               <td style={{ display: 'flex', gap: 6 }}>
                 {e.status === 'pendente' && (
-                  <button className="secondary-button" onClick={() => markPaid(e)}>Marcar pago</button>
+                  <button className="secondary-button" onClick={() => markPaid(e)}>
+                    {tab === 'receber' ? 'Marcar recebido' : 'Marcar pago'}
+                  </button>
                 )}
                 {e.nf_status === 'nao_emitida' && (
                   <button className="secondary-button" onClick={() => requestNfIntegration(e)}>Preparar NF</button>

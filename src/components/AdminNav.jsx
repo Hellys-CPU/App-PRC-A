@@ -3,11 +3,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase';
 import Brand from './Brand.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
-import { useAdminRole, canAccess } from '../hooks/useAdminRole.js';
+import { useAdminRole, pageAllowed } from '../hooks/useAdminRole.js';
 
 const TABS = [
   { page: 'dashboard', path: '/', label: 'Painel' },
-  { page: 'nova-viagem', path: '/nova-viagem', label: 'Nova Viagem' },
+  { page: 'nova-viagem', path: '/nova-viagem', label: 'Programação em Massa' },
   { page: 'motoristas', path: '/motoristas', label: 'Motoristas' },
   { page: 'frota', path: '/frota', label: 'Frota' },
   { page: 'mapa', path: '/mapa', label: 'Mapa' },
@@ -15,11 +15,11 @@ const TABS = [
   { page: 'financeiro', path: '/financeiro', label: 'Financeiro' },
   { page: 'relatorios', path: '/relatorios', label: 'Relatórios' },
   { page: 'configuracoes', path: '/configuracoes', label: 'Configurações' },
-  { page: 'admins', path: '/admins', label: 'Logins' },
+  { page: 'admins', path: '/admins', label: 'Admin' },
 ];
 
 export default function AdminNav() {
-  const { role } = useAdminRole();
+  const { permissions } = useAdminRole();
   const location = useLocation();
 
   async function handleLogout() {
@@ -30,7 +30,7 @@ export default function AdminNav() {
     <div className="admin-nav">
       <div className="admin-nav-brand"><Brand /></div>
       <nav className="admin-nav-tabs">
-        {TABS.filter((t) => canAccess(role, t.page)).map((t) => (
+        {TABS.filter((t) => pageAllowed(permissions, t.page)).map((t) => (
           <Link
             key={t.page}
             to={t.path}

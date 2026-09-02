@@ -1,19 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
+import { useToast } from '../components/Toast.jsx';
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export default function AdminNovaViagem() {
   const [drivers, setDrivers] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [clients, setClients] = useState([]);
-  const [form, setForm] = useState({
-    driverId: '', routeId: '', origin: '', destination: '',
-    clientId: '', cargoDescription: '', freightValue: '',
-  });
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState(null);
-  const navigate = useNavigate();
+
+  const [scheduledDate, setScheduledDate] = useState(todayISO());
+  const [clientId, setClientId] = useState('');
+  const [cargoDescription, setCargoDescription] = useState('');
+  const [quantities, setQuantities] = useState({}); // routeId -> quantidade
+
+  const [rows, setRows] = useState([]); // linhas geradas no passo 2
+  const [generating, setGenerating] = useState(false);
+
+  const toast = useToast();
 
   useEffect(() => { loadDrivers(); loadRoutes(); loadClients(); }, []);
 
@@ -33,127 +40,187 @@ export default function AdminNovaViagem() {
     setClients(data || []);
   }
 
-  function handleRouteChange(routeId) {
-    const route = routes.find((r) => r.id === routeId);
-    setForm({
-      ...form,
-      routeId,
-      origin: route ? route.origin : form.origin,
-      destination: route ? route.destination : form.destination,
-      freightValue: route?.default_freight_value != null ? String(route.default_freight_value) : form.freightValue,
+  function buildTable() {
+    const newRows = [];
+    routes.forEach((r) => {
+      const qty = Number(quantities[r.id] || 0);
+      for (let i = 0; i < qty; i++) {
+        newRows.push({
+          tempId: `${r.id}-${i}-${Date.now()}`,
+          routeId: r.id,
+          routeCode: r.code,
+          origin: r.origin,
+          destination: r.destination,
+          freightValue: r.default_freight_value,
+          driverId: '',
+        });
+      }
     });
+    if (newRows.length === 0) {
+      toast('Defina ao menos uma quantidade maior que zero.', 'error');
+      return;
+    }
+    setRows(newRows);
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setSaving(true);
-    setMessage(null);
+  function updateRowDriver(tempId, driverId) {
+    setRows((prev) => prev.map((row) => (row.tempId === tempId ? { ...row, driverId } : row)));
+  }
 
-    if (!form.driverId) {
-      setMessage({ type: 'error', text: 'Selecione um motorista.' });
-      setSaving(false);
+  function removeRow(tempId) {
+    setRows((prev) => prev.filter((row) => row.tempId !== tempId));
+  }
+
+  async function handleGenerate() {
+    const missing = rows.filter((r) => !r.driverId);
+    if (missing.length > 0) {
+      toast(`Falta escolher motorista em ${missing.length} linha(s).`, 'error');
       return;
     }
 
-    const { data: existing } = await supabase
+    const driverIds = rows.map((r) => r.driverId);
+    const duplicated = driverIds.filter((id, i) => driverIds.indexOf(id) !== i);
+    if (duplicated.length > 0) {
+      toast('Tem motorista repetido em mais de uma linha — cada motorista só pode ter uma viagem por vez.', 'error');
+      return;
+    }
+
+    setGenerating(true);
+
+    const { data: openTrips } = await supabase
       .from('trips')
-      .select('id')
-      .eq('driver_id', form.driverId)
-      .in('status', ['assigned', 'in_progress'])
-      .maybeSingle();
+      .select('driver_id')
+      .in('driver_id', driverIds)
+      .in('status', ['assigned', 'in_progress']);
 
-    if (existing) {
-      setMessage({ type: 'error', text: 'Este motorista já possui uma viagem em aberto.' });
-      setSaving(false);
+    const busyIds = new Set((openTrips || []).map((t) => t.driver_id));
+    if (busyIds.size > 0) {
+      const busyNames = rows
+        .filter((r) => busyIds.has(r.driverId))
+        .map((r) => drivers.find((d) => d.id === r.driverId)?.profiles?.full_name || r.driverId);
+      setGenerating(false);
+      toast(`Estes motoristas já têm viagem em aberto: ${busyNames.join(', ')}. Ajuste antes de gerar.`, 'error');
       return;
     }
 
-    const selectedClient = clients.find((c) => c.id === form.clientId);
+    const selectedClient = clients.find((c) => c.id === clientId);
 
-    const { data: newTrip, error } = await supabase.from('trips').insert({
-      driver_id: form.driverId,
-      route_id: form.routeId || null,
-      origin: form.origin,
-      destination: form.destination,
-      client_id: form.clientId || null,
+    const payload = rows.map((r) => ({
+      driver_id: r.driverId,
+      route_id: r.routeId,
+      origin: r.origin,
+      destination: r.destination,
+      client_id: clientId || null,
       client_name: selectedClient ? selectedClient.name : null,
-      cargo_description: form.cargoDescription || null,
-      freight_value: form.freightValue ? Number(form.freightValue) : null,
+      cargo_description: cargoDescription || null,
+      freight_value: r.freightValue,
+      scheduled_date: scheduledDate || null,
       status: 'assigned',
-    }).select('id').single();
+    }));
 
-    setSaving(false);
+    const { error } = await supabase.from('trips').insert(payload);
+    setGenerating(false);
 
     if (error) {
-      setMessage({ type: 'error', text: 'Erro ao criar viagem: ' + error.message });
+      toast('Erro ao gerar viagens: ' + error.message, 'error');
       return;
     }
 
-    setMessage({ type: 'success', text: 'Viagem atribuída com sucesso!' });
-    setForm({ driverId: '', routeId: '', origin: '', destination: '', clientId: '', cargoDescription: '', freightValue: '' });
+    toast(`${payload.length} viagem(ns) gerada(s) com sucesso!`, 'success');
+    setRows([]);
+    setQuantities({});
   }
+
+  const totalQty = Object.values(quantities).reduce((s, v) => s + Number(v || 0), 0);
 
   return (
     <div className="admin-container">
       <AdminNav />
-      <h1 className="page-title">Nova Viagem</h1>
+      <h1 className="page-title">Programação em Massa</h1>
+      <p className="subtitle" style={{ textAlign: 'left', marginBottom: 20 }}>
+        Defina quantas viagens gerar por rota, depois escolha o motorista de cada uma.
+      </p>
 
-      <form onSubmit={handleSubmit} className="motorista-form">
-        <label>Motorista</label>
-        <select value={form.driverId} onChange={(e) => setForm({ ...form, driverId: e.target.value })} required>
-          <option value="">Selecione um motorista</option>
-          {drivers.map((d) => (
-            <option key={d.id} value={d.id}>{d.profiles?.full_name} — {d.vehicle_plate}</option>
-          ))}
-        </select>
+      <div className="mass-step">
+        <h2 style={{ marginTop: 0 }}>Passo 1 — Quantidades</h2>
 
-        <label>Rota cadastrada (opcional)</label>
-        <select value={form.routeId} onChange={(e) => handleRouteChange(e.target.value)}>
-          <option value="">Sem rota cadastrada — preencher manualmente</option>
-          {routes.map((r) => (
-            <option key={r.id} value={r.id}>{r.code} — {r.origin} → {r.destination}</option>
-          ))}
-        </select>
+        <div className="mass-batch-fields">
+          <div>
+            <label>Data da operação</label>
+            <input type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+          </div>
+          <div>
+            <label>Cliente (aplica a todas as viagens desta geração)</label>
+            <select value={clientId} onChange={(e) => setClientId(e.target.value)}>
+              <option value="">Sem cliente / definir depois</option>
+              {clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Descrição da carga (opcional, aplica a todas)</label>
+            <input value={cargoDescription} onChange={(e) => setCargoDescription(e.target.value)} placeholder="Ex: Carga geral" />
+          </div>
+        </div>
 
-        <label>Origem</label>
-        <input value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} required />
-
-        <label>Destino</label>
-        <input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} required />
-
-        <label>Cliente</label>
-        <select value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })}>
-          <option value="">Sem cliente cadastrado</option>
-          {clients.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-
-        <label>Descrição da carga</label>
-        <input
-          value={form.cargoDescription}
-          onChange={(e) => setForm({ ...form, cargoDescription: e.target.value })}
-          placeholder="Ex: 12 paletes de eletrônicos"
-        />
-
-        <label>Valor do frete (R$)</label>
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          value={form.freightValue}
-          onChange={(e) => setForm({ ...form, freightValue: e.target.value })}
-          placeholder="0,00"
-        />
-
-        {message && (
-          <p className={message.type === 'error' ? 'error-text' : 'success-text'}>{message.text}</p>
+        {routes.length === 0 && (
+          <p className="error-text">Nenhuma rota ativa cadastrada. Cadastre em Configurações antes de programar em massa.</p>
         )}
 
-        <button type="submit" className="primary-button" disabled={saving}>
-          {saving ? 'Atribuindo...' : 'Atribuir Viagem'}
+        <div className="mass-route-grid">
+          {routes.map((r) => (
+            <div key={r.id} className="mass-route-card">
+              <strong>{r.code}</strong>
+              <span>{r.origin} → {r.destination}</span>
+              <label>Qtd. Viagens</label>
+              <input
+                type="number"
+                min="0"
+                value={quantities[r.id] || ''}
+                onChange={(e) => setQuantities({ ...quantities, [r.id]: e.target.value })}
+              />
+            </div>
+          ))}
+        </div>
+
+        <button className="primary-button" style={{ width: 'auto', padding: '12px 22px', marginTop: 16 }} onClick={buildTable}>
+          Gerar Tabela {totalQty > 0 ? `(${totalQty})` : ''}
         </button>
-      </form>
+      </div>
+
+      {rows.length > 0 && (
+        <div className="mass-step">
+          <h2 style={{ marginTop: 0 }}>Passo 2 — {rows.length} viagem(ns)</h2>
+
+          <table className="admin-table">
+            <thead>
+              <tr><th>#</th><th>Rota</th><th>Motorista</th><th></th></tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={row.tempId}>
+                  <td>{i + 1}</td>
+                  <td>{row.routeCode}</td>
+                  <td>
+                    <select value={row.driverId} onChange={(e) => updateRowDriver(row.tempId, e.target.value)}>
+                      <option value="">Selecione...</option>
+                      {drivers.map((d) => (
+                        <option key={d.id} value={d.id}>{d.profiles?.full_name} — {d.vehicle_plate}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <button className="secondary-button" onClick={() => removeRow(row.tempId)}>Remover</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <button className="primary-button" style={{ width: 'auto', padding: '12px 22px', marginTop: 16 }} onClick={handleGenerate} disabled={generating}>
+            {generating ? 'Gerando...' : `Gerar ${rows.length} Viagem(ns)`}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
