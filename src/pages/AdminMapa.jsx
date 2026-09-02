@@ -22,6 +22,7 @@ export default function AdminMapa() {
     const channel = supabase
       .channel('mapa_trip_stages')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_stages' }, loadPoints)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'location_pings' }, loadPoints)
       .subscribe();
 
     return () => {
@@ -60,7 +61,8 @@ export default function AdminMapa() {
       .select(`
         id, status,
         drivers ( vehicle_plate, profiles ( full_name ) ),
-        trip_stages ( status, recorded_at, latitude, longitude )
+        trip_stages ( status, recorded_at, latitude, longitude ),
+        location_pings ( latitude, longitude, recorded_at )
       `)
       .eq('status', 'in_progress');
 
@@ -74,15 +76,27 @@ export default function AdminMapa() {
 
     const result = [];
     (data || []).forEach((trip) => {
+      // Compara o ping mais recente (rastreamento por intervalo) com a última etapa
+      // registrada por foto, e usa o que for mais atual — o mapa reflete a posição real.
       const stagesWithCoords = (trip.trip_stages || []).filter((s) => s.latitude && s.longitude);
-      const last = stagesWithCoords.sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at))[0];
+      const lastStage = stagesWithCoords.sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at))[0];
+      const pings = trip.location_pings || [];
+      const lastPing = [...pings].sort((a, b) => new Date(b.recorded_at) - new Date(a.recorded_at))[0];
+
+      let last = lastStage;
+      let isPing = false;
+      if (lastPing && (!lastStage || new Date(lastPing.recorded_at) > new Date(lastStage.recorded_at))) {
+        last = lastPing;
+        isPing = true;
+      }
       if (!last) return;
+
       result.push({
         latitude: last.latitude,
         longitude: last.longitude,
         driverName: trip.drivers?.profiles?.full_name || 'Motorista',
         plate: trip.drivers?.vehicle_plate || '-',
-        stageLabel: STAGE_LABELS[last.status] || last.status,
+        stageLabel: isPing ? 'Posição automática (em trânsito)' : (STAGE_LABELS[last.status] || last.status),
         recordedAt: new Date(last.recorded_at).toLocaleString('pt-BR'),
         status: trip.status,
       });

@@ -12,6 +12,8 @@ const STATUSES = [
   { key: 'parada_eventual', label: 'Parada Eventual', color: '#b8492b' },
 ];
 
+const PING_INTERVAL_MS = 3 * 60 * 1000; // a cada 3 minutos, enquanto o app estiver aberto
+
 export default function DriverHome() {
   const [lastTimes, setLastTimes] = useState({});
   const [profile, setProfile] = useState(null);
@@ -29,6 +31,32 @@ export default function DriverHome() {
 
     return () => supabase.removeChannel(channel);
   }, []);
+
+  // Rastreamento por intervalo: só roda com viagem em andamento e o app aberto nesta tela.
+  useEffect(() => {
+    if (!trip || trip.status !== 'in_progress' || !navigator.geolocation) return;
+
+    function sendPing() {
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { data: userData } = await supabase.auth.getUser();
+          if (!userData?.user) return;
+          await supabase.from('location_pings').insert({
+            driver_id: userData.user.id,
+            trip_id: trip.id,
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+        },
+        () => {},
+        { timeout: 8000 }
+      );
+    }
+
+    sendPing();
+    const interval = setInterval(sendPing, PING_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [trip?.id, trip?.status]);
 
   async function loadData() {
     const { data: userData } = await supabase.auth.getUser();
@@ -132,6 +160,9 @@ export default function DriverHome() {
         </>
       )}
 
+      <button className="history-link" onClick={() => navigate('/chat')} style={{ marginBottom: 10 }}>
+        Falar com a Central
+      </button>
       <button className="history-link" onClick={() => navigate('/historico')}>
         Ver Histórico Completo
       </button>

@@ -18,6 +18,7 @@ export default function DriverCamera() {
   const [photoDataUrl, setPhotoDataUrl] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [flash, setFlash] = useState(false);
   const [coords, setCoords] = useState(null);
 
   useEffect(() => {
@@ -59,6 +60,8 @@ export default function DriverCamera() {
     canvas.height = video.videoHeight;
     canvas.getContext('2d').drawImage(video, 0, 0);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+    setFlash(true);
+    setTimeout(() => setFlash(false), 350);
     setPhotoDataUrl(dataUrl);
     stopCamera();
   }
@@ -144,7 +147,10 @@ export default function DriverCamera() {
 
       {!photoDataUrl ? (
         <>
-          <video ref={videoRef} autoPlay playsInline muted className="camera-preview" />
+          <div className="camera-viewport">
+            <video ref={videoRef} autoPlay playsInline muted className="camera-preview" />
+            <div className={`camera-flash${flash ? ' active' : ''}`} />
+          </div>
           <button className="capture-button" onClick={capturePhoto}>Tirar Foto</button>
         </>
       ) : (

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import Brand from '../components/Brand.jsx';
+import { useToast } from '../components/Toast.jsx';
+import { useAdminRole, canAccess } from '../hooks/useAdminRole.js';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -12,11 +14,31 @@ const STAGE_LABELS = {
   parada_eventual: 'Parada Eventual',
 };
 
+// Etapas sequenciais do fluxo (exclui "parada_eventual", que é uma exceção
+// e não representa avanço no pipeline — ela vira um alerta no card, não uma coluna).
+const SEQUENTIAL_STAGES = ['apresentacao_base_origem', 'saida_base_origem', 'chegada_base_destino'];
+
 const COLUMNS = [
   { key: 'assigned', title: 'Atribuídas' },
-  { key: 'in_progress', title: 'Em Andamento' },
+  { key: 'apresentacao_base_origem', title: 'Apresentação na Origem' },
+  { key: 'saida_base_origem', title: 'Em Trânsito' },
+  { key: 'chegada_base_destino', title: 'Chegada no Destino' },
   { key: 'completed', title: 'Finalizadas' },
 ];
+
+// Retorna a etapa sequencial mais recente da viagem (ignorando parada_eventual).
+function lastSequentialStage(trip) {
+  const seq = (trip.trip_stages || []).filter((s) => SEQUENTIAL_STAGES.includes(s.status));
+  if (seq.length === 0) return null;
+  return seq[seq.length - 1].status;
+}
+
+// Determina em qual coluna do Kanban a viagem cai.
+function tripColumn(trip) {
+  if (trip.status === 'assigned') return 'assigned';
+  if (trip.status === 'completed') return 'completed';
+  return lastSequentialStage(trip) || 'apresentacao_base_origem';
+}
 
 // Acima disso, uma viagem em andamento sem nova etapa é sinalizada como atrasada.
 const LATE_THRESHOLD_MINUTES = 120;
@@ -49,6 +71,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
+  const toast = useToast();
+  const { role } = useAdminRole();
 
   useEffect(() => {
     loadData();
@@ -154,9 +178,9 @@ export default function AdminDashboard() {
     const text = buildWhatsAppText(trip);
     try {
       await navigator.clipboard.writeText(text);
-      alert('Texto copiado! Já pode colar no WhatsApp.');
+      toast('Texto copiado! Já pode colar no WhatsApp.', 'success');
     } catch {
-      alert('Não foi possível copiar automaticamente. Copie manualmente:\n\n' + text);
+      toast('Não foi possível copiar automaticamente.', 'error');
     }
   }
 
@@ -196,6 +220,9 @@ export default function AdminDashboard() {
               ? `Última etapa: ${STAGE_LABELS[lastStage.status] || lastStage.status} às ${formatTime(lastStage.recorded_at)}`
               : 'Sem etapas registradas'}
           </div>
+          {lastStage?.status === 'parada_eventual' && (
+            <span className="elapsed-badge is-late">⚠ Parada eventual registrada</span>
+          )}
           {trip.status === 'in_progress' && (
             <span className={`elapsed-badge${late ? ' is-late' : ''}`}>
               {late ? '⚠ Atrasada — ' : ''}parada {formatElapsed(elapsedMins)}
@@ -238,12 +265,15 @@ export default function AdminDashboard() {
         <Brand subtitle="Central de Operações" />
         <div className="header-actions">
           <ThemeToggle />
-          <button onClick={() => navigate('/nova-viagem')}>Nova Viagem</button>
-          <button onClick={() => navigate('/motoristas')}>Motoristas</button>
-          <button onClick={() => navigate('/frota')}>Frota</button>
-          <button onClick={() => navigate('/mapa')}>Mapa</button>
-          <button onClick={() => navigate('/relatorios')}>Relatórios</button>
-          <button onClick={() => navigate('/configuracoes')}>Configurações</button>
+          {canAccess(role, 'nova-viagem') && <button onClick={() => navigate('/nova-viagem')}>Nova Viagem</button>}
+          {canAccess(role, 'motoristas') && <button onClick={() => navigate('/motoristas')}>Motoristas</button>}
+          {canAccess(role, 'frota') && <button onClick={() => navigate('/frota')}>Frota</button>}
+          {canAccess(role, 'mapa') && <button onClick={() => navigate('/mapa')}>Mapa</button>}
+          {canAccess(role, 'chat') && <button onClick={() => navigate('/chat')}>Chat</button>}
+          {canAccess(role, 'financeiro') && <button onClick={() => navigate('/financeiro')}>Financeiro</button>}
+          {canAccess(role, 'relatorios') && <button onClick={() => navigate('/relatorios')}>Relatórios</button>}
+          {canAccess(role, 'configuracoes') && <button onClick={() => navigate('/configuracoes')}>Configurações</button>}
+          {canAccess(role, 'admins') && <button onClick={() => navigate('/admins')}>Logins</button>}
           <button className="logout-button" onClick={handleLogout}>Sair</button>
         </div>
       </header>
@@ -270,7 +300,7 @@ export default function AdminDashboard() {
 
           <div className="kanban-board">
             {COLUMNS.map((col) => {
-              const colTrips = filteredTrips.filter((t) => t.status === col.key);
+              const colTrips = filteredTrips.filter((t) => tripColumn(t) === col.key);
               return (
                 <div key={col.key} className="kanban-column">
                   <div className="kanban-column-header">

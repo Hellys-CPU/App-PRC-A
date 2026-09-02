@@ -9,6 +9,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [shake, setShake] = useState(false);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -21,17 +22,19 @@ export default function Login() {
     setLoading(false);
     if (authError) {
       setError(mode === 'cpf' ? 'CPF ou senha inválidos.' : 'Email ou senha inválidos.');
+      setShake(true);
+      setTimeout(() => setShake(false), 400);
     }
   }
 
   return (
     <div className="auth-container">
-      <div className="auth-card">
+      <div className={`auth-card${shake ? ' shake' : ''}`}>
         <div className="auth-theme-toggle"><ThemeToggle /></div>
         <Brand subtitle="Transportadora" />
         <p className="subtitle">Central de Operações — acompanhamento de viagens</p>
 
-        <div className="mode-switch">
+        <div className="mode-switch" data-active={mode}>
           <button
             type="button"
             className={mode === 'cpf' ? 'active' : ''}

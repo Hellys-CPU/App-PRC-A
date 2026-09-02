@@ -10,9 +10,15 @@ import AdminFrota from './pages/AdminFrota.jsx';
 import AdminMapa from './pages/AdminMapa.jsx';
 import AdminRelatorios from './pages/AdminRelatorios.jsx';
 import AdminConfiguracoes from './pages/AdminConfiguracoes.jsx';
+import AdminFinanceiro from './pages/AdminFinanceiro.jsx';
+import AdminChat from './pages/AdminChat.jsx';
+import AdminAdmins from './pages/AdminAdmins.jsx';
+import RequireRole from './components/RequireRole.jsx';
+import DriverChat from './pages/DriverChat.jsx';
 import DriverHome from './pages/DriverHome.jsx';
 import DriverCamera from './pages/DriverCamera.jsx';
 import DriverHistory from './pages/DriverHistory.jsx';
+import InstallPrompt from './components/InstallPrompt.jsx';
 
 export default function App() {
   const [session, setSession] = useState(undefined); // undefined = carregando
@@ -47,9 +53,12 @@ export default function App() {
 
   if (!session) {
     return (
-      <Routes>
-        <Route path="*" element={<Login />} />
-      </Routes>
+      <>
+        <Routes>
+          <Route path="*" element={<Login />} />
+        </Routes>
+        <InstallPrompt />
+      </>
     );
   }
 
@@ -59,27 +68,37 @@ export default function App() {
 
   if (role === 'admin') {
     return (
-      <Routes>
-        <Route path="/" element={<AdminDashboard />} />
-        <Route path="/motoristas" element={<AdminMotoristas />} />
-        <Route path="/nova-viagem" element={<AdminNovaViagem />} />
-        <Route path="/frota" element={<AdminFrota />} />
-        <Route path="/mapa" element={<AdminMapa />} />
-        <Route path="/relatorios" element={<AdminRelatorios />} />
-        <Route path="/configuracoes" element={<AdminConfiguracoes />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      <>
+        <Routes>
+          <Route path="/" element={<RequireRole page="dashboard"><AdminDashboard /></RequireRole>} />
+          <Route path="/motoristas" element={<RequireRole page="motoristas"><AdminMotoristas /></RequireRole>} />
+          <Route path="/nova-viagem" element={<RequireRole page="nova-viagem"><AdminNovaViagem /></RequireRole>} />
+          <Route path="/frota" element={<RequireRole page="frota"><AdminFrota /></RequireRole>} />
+          <Route path="/mapa" element={<RequireRole page="mapa"><AdminMapa /></RequireRole>} />
+          <Route path="/relatorios" element={<RequireRole page="relatorios"><AdminRelatorios /></RequireRole>} />
+          <Route path="/configuracoes" element={<RequireRole page="configuracoes"><AdminConfiguracoes /></RequireRole>} />
+          <Route path="/financeiro" element={<RequireRole page="financeiro"><AdminFinanceiro /></RequireRole>} />
+          <Route path="/chat" element={<RequireRole page="chat"><AdminChat /></RequireRole>} />
+          <Route path="/admins" element={<RequireRole page="admins"><AdminAdmins /></RequireRole>} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+        <InstallPrompt />
+      </>
     );
   }
 
   if (role === 'driver') {
     return (
-      <Routes>
-        <Route path="/" element={<DriverHome />} />
-        <Route path="/camera/:status" element={<DriverCamera />} />
-        <Route path="/historico" element={<DriverHistory />} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      <>
+        <Routes>
+          <Route path="/" element={<DriverHome />} />
+          <Route path="/camera/:status" element={<DriverCamera />} />
+          <Route path="/historico" element={<DriverHistory />} />
+          <Route path="/chat" element={<DriverChat />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+        <InstallPrompt />
+      </>
     );
   }
 

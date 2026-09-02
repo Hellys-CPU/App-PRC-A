@@ -69,7 +69,7 @@ export default function AdminNovaViagem() {
 
     const selectedClient = clients.find((c) => c.id === form.clientId);
 
-    const { error } = await supabase.from('trips').insert({
+    const { data: newTrip, error } = await supabase.from('trips').insert({
       driver_id: form.driverId,
       route_id: form.routeId || null,
       origin: form.origin,
@@ -79,7 +79,7 @@ export default function AdminNovaViagem() {
       cargo_description: form.cargoDescription || null,
       freight_value: form.freightValue ? Number(form.freightValue) : null,
       status: 'assigned',
-    });
+    }).select('id').single();
 
     setSaving(false);
 
