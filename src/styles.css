@@ -1,20 +1,104 @@
+/* ==========================================================================
+   PRC TRANSPORTES — Central de Operações
+   Identidade: grafite de asfalto + âmbar de sinalização rodoviária.
+   Tipografia: Oswald (condensada, sinalização) + Inter (leitura/dados).
+   ========================================================================== */
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #0f1117;
-  color: #e5e7eb;
+:root, [data-theme="dark"] {
+  --ink: #14181d;
+  --panel: #1d232b;
+  --panel-raised: #242b34;
+  --line: #333b46;
+  --text: #d7dbe0;
+  --text-dim: #838d99;
+  --text-strong: #f5f6f7;
+
+  --amber: #f2a93b;
+  --amber-strong: #d6902a;
+  --route: #3b8c6e;
+  --route-strong: #2e6f57;
+  --alert: #d9603b;
+  --assigned: #4f80b8;
+
+  --shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
+
+[data-theme="light"] {
+  --ink: #eef0f2;
+  --panel: #ffffff;
+  --panel-raised: #f5f6f8;
+  --line: #dce1e6;
+  --text: #2a323c;
+  --text-dim: #6b7580;
+  --text-strong: #12161b;
+
+  --amber: #c97f16;
+  --amber-strong: #a86910;
+  --route: #2e7d5b;
+  --route-strong: #23604a;
+  --alert: #b8492b;
+  --assigned: #35618f;
+
+  --shadow: 0 6px 20px rgba(20,24,29,0.10);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--ink);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, .brand-name, button, .status-label, .kanban-column-header span:first-child {
+  font-family: 'Oswald', 'Inter', sans-serif;
+}
+
+button { font-family: inherit; cursor: pointer; }
+input, select { font-family: 'Inter', sans-serif; }
+
+::selection { background: var(--amber); color: #14181d; }
 
 .loading-screen {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   align-items: center;
   justify-content: center;
   height: 100vh;
   text-align: center;
   padding: 24px;
+  color: var(--text-dim);
+}
+
+/* ---------- Marca PRC ---------- */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-mark {
+  width: 30px;
+  height: 30px;
+  color: var(--text-strong);
+  flex-shrink: 0;
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.brand-name {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-strong);
+}
+.brand-subtitle {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.4px;
 }
 
 /* ---------- Login ---------- */
@@ -24,23 +108,32 @@ body {
   justify-content: center;
   min-height: 100vh;
   padding: 16px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent, transparent 38px, var(--line) 38px, var(--line) 46px
+    ) bottom / 100% 3px no-repeat,
+    var(--ink);
 }
 .auth-card {
-  background: #1a1d29;
-  border-radius: 16px;
-  padding: 32px 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--amber);
+  padding: 30px 26px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  box-shadow: var(--shadow);
 }
-.auth-card h1 { text-align: center; font-size: 26px; margin-bottom: 4px; color: #fff; }
-.subtitle { text-align: center; color: #9ca3af; margin-bottom: 24px; font-size: 14px; }
+.auth-theme-toggle { display: flex; justify-content: flex-end; margin-bottom: -6px; }
+.auth-card .brand { justify-content: center; margin-bottom: 22px; }
+
+.subtitle { text-align: center; color: var(--text-dim); margin-bottom: 24px; font-size: 13px; }
 
 .mode-switch {
   display: flex;
-  background: #0f1117;
-  border-radius: 10px;
-  padding: 4px;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  padding: 3px;
   margin-bottom: 20px;
 }
 .mode-switch button {
@@ -48,420 +141,136 @@ body {
   padding: 10px;
   border: none;
   background: transparent;
-  color: #9ca3af;
-  border-radius: 8px;
+  color: var(--text-dim);
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
-.mode-switch button.active { background: #2563eb; color: #fff; }
+.mode-switch button.active { background: var(--amber); color: #14181d; }
 
-.auth-card input {
+.auth-card input, .motorista-form input, .motorista-form select {
   width: 100%;
-  padding: 14px;
-  margin-bottom: 14px;
-  border-radius: 10px;
-  border: 1px solid #2d3142;
-  background: #0f1117;
-  color: #fff;
+  padding: 13px 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--text-strong);
   font-size: 15px;
 }
-.auth-card input:focus { outline: none; border-color: #2563eb; }
+.auth-card input:focus, .motorista-form input:focus, .motorista-form select:focus {
+  outline: none;
+  border-color: var(--amber);
+}
 
 .primary-button {
   width: 100%;
-  padding: 15px;
-  background: #2563eb;
-  color: #fff;
+  padding: 14px;
   border: none;
-  border-radius: 10px;
-  font-size: 16px;
+  background: var(--amber);
+  color: #14181d;
   font-weight: 700;
-  cursor: pointer;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
-.primary-button:disabled { opacity: 0.6; cursor: not-allowed; }
-.primary-button:hover:not(:disabled) { background: #1d4ed8; }
+.primary-button:hover { background: var(--amber-strong); }
+.primary-button:disabled { opacity: 0.6; cursor: default; }
 
 .secondary-button {
-  padding: 15px;
-  background: #2d3142;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
   font-weight: 600;
-  cursor: pointer;
-  flex: 1;
-}
-
-.error-text { color: #f87171; font-size: 13px; margin-bottom: 12px; text-align: center; }
-.success-text { color: #34d399; font-size: 13px; margin-bottom: 12px; text-align: center; }
-
-/* ---------- Driver Home ---------- */
-.driver-home { padding: 20px; max-width: 480px; margin: 0 auto; }
-.driver-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.driver-header h2 { font-size: 20px; color: #fff; }
-.logout-button, .back-button {
-  background: none;
-  border: 1px solid #2d3142;
-  color: #9ca3af;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
   font-size: 13px;
 }
+.secondary-button:hover { border-color: var(--text-dim); }
 
-.status-buttons { display: flex; flex-direction: column; gap: 14px; }
-.status-button {
-  border: none;
-  border-radius: 14px;
-  padding: 22px;
-  min-height: 90px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  cursor: pointer;
-  color: #fff;
-  text-align: left;
-}
-.status-label { font-size: 17px; font-weight: 700; }
-.status-time { font-size: 12px; opacity: 0.85; margin-top: 6px; }
+.error-text { color: var(--alert); font-size: 13px; margin-bottom: 12px; }
+.success-text { color: var(--route); font-size: 13px; margin-bottom: 12px; }
 
-.history-link {
-  display: block;
-  width: 100%;
-  margin-top: 20px;
-  padding: 14px;
-  background: none;
-  border: 1px solid #2d3142;
-  color: #60a5fa;
-  border-radius: 10px;
-  cursor: pointer;
-  font-weight: 600;
-}
+/* ---------- Admin: shell ---------- */
+.admin-container { max-width: 1100px; margin: 0 auto; padding: 20px 18px 60px; }
 
-/* ---------- Camera ---------- */
-.camera-screen { max-width: 480px; margin: 0 auto; padding: 16px; }
-.camera-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.camera-header h3 { color: #fff; font-size: 16px; }
-.camera-preview {
-  width: 100%;
-  border-radius: 14px;
-  background: #000;
-  max-height: 60vh;
-  object-fit: cover;
-}
-.capture-button {
-  width: 100%;
-  margin-top: 16px;
-  padding: 18px;
-  background: #dc2626;
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.confirm-actions { display: flex; gap: 12px; margin-top: 16px; }
-.confirm-actions .primary-button { flex: 1; }
-
-/* ---------- History ---------- */
-.history-screen { max-width: 480px; margin: 0 auto; padding: 16px; }
-.history-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
-.history-item {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  background: #1a1d29;
-  border-radius: 12px;
-  padding: 12px;
-}
-.history-thumb { width: 60px; height: 60px; border-radius: 8px; object-fit: cover; }
-.history-status { font-weight: 700; color: #fff; font-size: 14px; }
-.history-time { color: #9ca3af; font-size: 12px; margin-top: 4px; }
-.empty-state { color: #9ca3af; text-align: center; padding: 24px; }
-
-/* ---------- Admin ---------- */
-.admin-container { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
 .admin-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.admin-header h1 { color: #fff; font-size: 22px; }
-.header-actions { display: flex; gap: 10px; }
-.header-actions button {
-  background: #1a1d29;
-  border: 1px solid #2d3142;
-  color: #e5e7eb;
-  padding: 10px 16px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.cards { display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; }
-.card {
-  background: #1a1d29;
-  border-radius: 14px;
-  padding: 20px 28px;
-  flex: 1;
-  min-width: 140px;
-  text-align: center;
-}
-.card h3 { font-size: 32px; color: #60a5fa; }
-.card p { color: #9ca3af; font-size: 13px; margin-top: 6px; }
-
-.admin-table { width: 100%; border-collapse: collapse; background: #1a1d29; border-radius: 12px; overflow: hidden; }
-.admin-table th, .admin-table td { padding: 14px; text-align: left; border-bottom: 1px solid #2d3142; }
-.admin-table th { color: #9ca3af; font-size: 12px; text-transform: uppercase; }
-.admin-table td { color: #e5e7eb; font-size: 14px; }
-.contact-cell a { margin-right: 12px; font-size: 18px; text-decoration: none; }
-
-.motorista-form {
-  background: #1a1d29;
-  border-radius: 14px;
-  padding: 24px;
-  max-width: 480px;
-  display: flex;
-  flex-direction: column;
-}
-.motorista-form label { color: #9ca3af; font-size: 13px; margin-bottom: 6px; margin-top: 10px; }
-.motorista-form input {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #2d3142;
-  background: #0f1117;
-  color: #fff;
-  margin-bottom: 4px;
-}
-.motorista-form .primary-button { margin-top: 20px; }
-
-/* ---------- Trips Tracking ---------- */
-.trips-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; }
-
-.trip-card {
-  background: #1a1d29;
-  border-radius: 14px;
-  overflow: hidden;
-  border-left: 4px solid #2d3142;
-  transition: border-color 0.2s;
-}
-.trip-card.trip-active { border-left-color: #f59e0b; }
-.trip-card.trip-done { border-left-color: #10b981; }
-
-.trip-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 18px;
-  cursor: pointer;
-  gap: 12px;
-}
-.trip-card-header strong { color: #fff; font-size: 15px; }
-.trip-substatus { color: #9ca3af; font-size: 12px; margin-top: 4px; }
-
-.trip-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 20px;
-  white-space: nowrap;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-.badge-active { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-.badge-done { background: rgba(16, 185, 129, 0.15); color: #10b981; }
-
-.trip-card-body {
-  padding: 4px 18px 18px;
-  border-top: 1px solid #2d3142;
-}
-
-.stages-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin-top: 12px;
-  position: relative;
-  padding-left: 22px;
-}
-.stages-timeline::before {
-  content: '';
-  position: absolute;
-  left: 6px;
-  top: 6px;
-  bottom: 6px;
-  width: 2px;
-  background: #2d3142;
-}
-
-.stage-row {
-  position: relative;
-  padding: 10px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.stage-row::before {
-  content: '';
-  position: absolute;
-  left: -22px;
-  top: 14px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #60a5fa;
-  border: 2px solid #1a1d29;
-  box-shadow: 0 0 0 2px #60a5fa;
-}
-
-.stage-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-}
-.stage-info strong { color: #e5e7eb; font-size: 13px; }
-.stage-info span { color: #9ca3af; font-size: 12px; white-space: nowrap; }
-
-.stage-photo {
-  width: 100%;
-  max-width: 220px;
-  border-radius: 10px;
-  object-fit: cover;
-  max-height: 160px;
-}
-
-.trip-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-}
-.trip-actions button { flex: 1; padding: 12px; font-size: 13px; }
-
-/* ---------- Nova Viagem / Select ---------- */
-.motorista-form select {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #2d3142;
-  background: #0f1117;
-  color: #fff;
-  margin-bottom: 4px;
-  font-size: 15px;
-}
-
-/* ---------- Driver: viagem atual / sem viagem ---------- */
-.current-trip-box {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #1a1d29;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 20px;
-  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
   flex-wrap: wrap;
 }
-.trip-route { color: #fff; font-weight: 700; font-size: 15px; }
-.badge-assigned { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
 
-.no-trip-box {
-  background: #1a1d29;
-  border-radius: 12px;
-  padding: 24px;
-  text-align: center;
-  color: #e5e7eb;
-}
-.no-trip-box .subtitle { margin-top: 6px; }
-
-/* ============================================================
-   TEMA CLARO / ESCURO — via data-theme no <html>
-   ============================================================ */
-:root, [data-theme="dark"] {
-  --bg: #0f1117;
-  --bg-card: #1a1d29;
-  --border: #2d3142;
-  --text: #e5e7eb;
-  --text-dim: #9ca3af;
-  --text-strong: #ffffff;
-  --accent: #2563eb;
-  --accent-strong: #1d4ed8;
-}
-
-[data-theme="light"] {
-  --bg: #f3f4f6;
-  --bg-card: #ffffff;
-  --border: #e5e7eb;
-  --text: #1f2937;
-  --text-dim: #6b7280;
-  --text-strong: #0f1117;
-  --accent: #2563eb;
-  --accent-strong: #1d4ed8;
-}
-
-body { background: var(--bg); color: var(--text); }
-
-.auth-card, .card, .admin-table, .motorista-form, .history-item, .trip-card,
-.kanban-card, .kanban-column, .no-trip-box, .current-trip-box {
-  background: var(--bg-card);
-}
-
-.auth-card h1, .admin-header h1, .driver-header h2, .camera-header h3,
-.history-status, .card h3, .trip-route { color: var(--text-strong); }
-
-.subtitle, .card p, .admin-table th, .trip-substatus, .history-time,
-.empty-state, .stage-info span { color: var(--text-dim); }
-
-.admin-table td, .stage-info strong { color: var(--text); }
-
-.auth-card input, .motorista-form input, .motorista-form select,
-.mode-switch { background: var(--bg); border-color: var(--border); color: var(--text); }
-
-.admin-table th, .admin-table td, .trip-card-body,
-.header-actions button, .logout-button, .back-button,
-.history-link { border-color: var(--border); }
-
+.header-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .header-actions button, .logout-button, .back-button {
-  background: var(--bg-card);
+  background: var(--panel);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.header-actions button:hover, .back-button:hover { border-color: var(--amber); color: var(--text-strong); }
+.logout-button:hover { border-color: var(--alert); color: var(--alert); }
+
+.theme-toggle { font-size: 16px; padding: 9px 12px !important; line-height: 1; }
+
+h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-strong);
+  margin: 28px 0 14px;
+  padding-left: 10px;
+  border-left: 3px solid var(--amber);
 }
 
-.theme-toggle {
-  font-size: 18px;
-  padding: 8px 12px !important;
+/* ---------- Cards de estatística ---------- */
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 700px) { .cards { grid-template-columns: 1fr; } }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 18px 20px;
 }
+.card h3 { font-size: 30px; color: var(--text-strong); font-weight: 700; }
+.card p { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
 
-/* ============================================================
-   KANBAN BOARD
-   ============================================================ */
+/* ---------- Toolbar (busca) ---------- */
+.trips-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.trips-toolbar input {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text-strong);
+  font-size: 14px;
+}
+.trips-toolbar input:focus { outline: none; border-color: var(--amber); }
+
+/* ---------- Kanban ---------- */
 .kanban-board {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 2px;
+  background: var(--line);
   margin-bottom: 32px;
+  border: 1px solid var(--line);
 }
-@media (max-width: 900px) {
-  .kanban-board { grid-template-columns: 1fr; }
-}
+@media (max-width: 900px) { .kanban-board { grid-template-columns: 1fr; } }
 
 .kanban-column {
-  background: var(--bg-card);
-  border-radius: 14px;
+  background: var(--ink);
   padding: 12px;
   min-height: 120px;
   display: flex;
@@ -472,48 +281,47 @@ body { background: var(--bg); color: var(--text); }
 .kanban-column-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 6px 8px 10px;
-  border-bottom: 1px solid var(--border);
-  font-weight: 700;
-  color: var(--text-strong);
+  align-items: baseline;
+  padding: 4px 4px 12px;
+  border-bottom: 2px solid var(--line);
+}
+.kanban-column-header span:first-child {
+  font-weight: 600;
   font-size: 14px;
+  letter-spacing: 0.5px;
+  color: var(--text-strong);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
 }
 .kanban-count {
-  background: var(--border);
-  color: var(--text);
-  border-radius: 20px;
+  background: var(--panel-raised);
+  color: var(--text-dim);
   font-size: 12px;
-  padding: 2px 10px;
+  padding: 2px 9px;
   font-weight: 700;
+  font-family: 'Inter', sans-serif;
 }
 
-.kanban-column-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.empty-state.small { padding: 12px; font-size: 13px; }
+.kanban-column-body { display: flex; flex-direction: column; gap: 10px; }
+.empty-state { color: var(--text-dim); font-size: 13px; }
+.empty-state.small { padding: 10px 4px; }
 
 .kanban-card {
-  background: var(--bg);
-  border-radius: 12px;
-  border-left: 4px solid var(--border);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--line);
   overflow: hidden;
 }
-.kanban-card.status-assigned { border-left-color: #60a5fa; }
-.kanban-card.status-in_progress { border-left-color: #f59e0b; }
-.kanban-card.status-completed { border-left-color: #10b981; }
+.kanban-card.status-assigned { border-left-color: var(--assigned); }
+.kanban-card.status-in_progress { border-left-color: var(--amber); }
+.kanban-card.status-in_progress.is-late { border-left-color: var(--alert); }
+.kanban-card.status-completed { border-left-color: var(--route); }
 
 .kanban-card-header {
   padding: 12px 14px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   position: relative;
 }
 .kanban-card-header strong { color: var(--text-strong); font-size: 14px; }
@@ -524,10 +332,138 @@ body { background: var(--bg); color: var(--text); }
   font-size: 11px;
   color: var(--text-dim);
   font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  border: 1px solid var(--line);
+  padding: 1px 6px;
+  letter-spacing: 0.5px;
+}
+.trip-substatus { color: var(--text-dim); font-size: 12px; }
+
+.elapsed-badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.elapsed-badge.is-late { color: var(--alert); }
+
+.trip-card-body {
+  padding: 4px 14px 14px;
+  border-top: 1px solid var(--line);
 }
 
-.auth-theme-toggle {
+.stages-timeline {
   display: flex;
-  justify-content: flex-end;
-  margin-bottom: 4px;
+  flex-direction: column;
+  margin-top: 10px;
+  position: relative;
+  padding-left: 20px;
+}
+.stages-timeline::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  background: var(--line);
+}
+.stage-row { position: relative; padding: 9px 0; display: flex; flex-direction: column; gap: 8px; }
+.stage-row::before {
+  content: '';
+  position: absolute;
+  left: -20px;
+  top: 13px;
+  width: 9px;
+  height: 9px;
+  background: var(--amber);
+  border: 2px solid var(--panel);
+}
+.stage-info { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.stage-info strong { color: var(--text); font-size: 13px; }
+.stage-info span { color: var(--text-dim); font-size: 12px; white-space: nowrap; font-family: 'Inter', sans-serif; }
+.stage-photo { width: 100%; max-width: 220px; object-fit: cover; max-height: 160px; }
+
+.trip-actions { display: flex; gap: 8px; margin-top: 14px; }
+.trip-actions button { flex: 1; padding: 11px; font-size: 12px; }
+
+/* ---------- Tabela de motoristas ---------- */
+.admin-table { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line); }
+.admin-table th, .admin-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--line); font-size: 13px; }
+.admin-table th { color: var(--text-dim); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+.admin-table td { color: var(--text); }
+.contact-cell { display: flex; gap: 12px; font-size: 16px; }
+.contact-cell a { text-decoration: none; }
+
+/* ---------- Formulários (Motorista / Viagem) ---------- */
+.motorista-form { display: flex; flex-direction: column; max-width: 460px; background: var(--panel); border: 1px solid var(--line); padding: 24px; }
+.motorista-form label { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+
+/* ---------- Driver: home ---------- */
+.driver-home { max-width: 480px; margin: 0 auto; padding: 20px 16px 60px; }
+.driver-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.driver-header h2 { border: none; padding: 0; font-size: 20px; color: var(--text-strong); margin: 0; }
+
+.current-trip-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--amber);
+  padding: 16px;
+  margin-bottom: 20px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.trip-route { color: var(--text-strong); font-weight: 700; font-size: 15px; }
+
+.trip-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 11px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.badge-active { background: rgba(242,169,59,0.15); color: var(--amber); }
+.badge-done { background: rgba(59,140,110,0.15); color: var(--route); }
+.badge-assigned { background: rgba(79,128,184,0.15); color: var(--assigned); }
+
+.no-trip-box { background: var(--panel); border: 1px dashed var(--line); padding: 26px; text-align: center; color: var(--text); }
+.no-trip-box .subtitle { margin-top: 6px; margin-bottom: 0; }
+
+.status-buttons { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.status-button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px 18px;
+  border: none;
+  color: #fff;
+  font-weight: 700;
+}
+.status-label { font-size: 15px; letter-spacing: 0.3px; }
+.status-time { font-size: 12px; opacity: 0.85; font-family: 'Inter', sans-serif; font-weight: 500; }
+
+.history-link {
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* ---------- Histórico ---------- */
+.history-item { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--amber); padding: 14px 16px; margin-bottom: 10px; }
+.history-status { color: var(--text-strong); font-weight: 700; font-size: 14px; }
+.history-time { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
+
+/* ---------- Utilitários ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
 }

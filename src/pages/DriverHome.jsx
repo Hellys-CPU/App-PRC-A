@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import ThemeToggle from '../components/ThemeToggle.jsx';
+import Brand from '../components/Brand.jsx';
 
 const STATUSES = [
-  { key: 'apresentacao_base_origem', label: 'Apresentação na Base Origem', color: '#2563eb' },
-  { key: 'saida_base_origem', label: 'Saída da Base Origem', color: '#059669' },
-  { key: 'chegada_base_destino', label: 'Chegada na Base Destino', color: '#d97706' },
-  { key: 'fim_descarga', label: 'Fim da Descarga', color: '#7c3aed' },
-  { key: 'parada_eventual', label: 'Parada Eventual', color: '#dc2626' },
+  { key: 'apresentacao_base_origem', label: 'Apresentação na Base Origem', color: '#4f80b8' },
+  { key: 'saida_base_origem', label: 'Saída da Base Origem', color: '#3b8c6e' },
+  { key: 'chegada_base_destino', label: 'Chegada na Base Destino', color: '#c97f16' },
+  { key: 'fim_descarga', label: 'Fim da Descarga', color: '#6d5bb0' },
+  { key: 'parada_eventual', label: 'Parada Eventual', color: '#b8492b' },
 ];
 
 export default function DriverHome() {
@@ -85,7 +86,8 @@ export default function DriverHome() {
     <div className="driver-home">
       <header className="driver-header">
         <div>
-          <h2>Olá, {profile?.full_name || 'Motorista'}</h2>
+          <Brand />
+          <h2 style={{ marginTop: 10 }}>Olá, {profile?.full_name || 'Motorista'}</h2>
           <p className="subtitle">
             {trip ? 'Toque em uma etapa para registrar' : 'Aguardando viagem'}
           </p>
