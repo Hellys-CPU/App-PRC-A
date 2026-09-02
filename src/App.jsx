@@ -9,6 +9,7 @@ import AdminNovaViagem from './pages/AdminNovaViagem.jsx';
 import AdminFrota from './pages/AdminFrota.jsx';
 import AdminMapa from './pages/AdminMapa.jsx';
 import AdminRelatorios from './pages/AdminRelatorios.jsx';
+import AdminConfiguracoes from './pages/AdminConfiguracoes.jsx';
 import DriverHome from './pages/DriverHome.jsx';
 import DriverCamera from './pages/DriverCamera.jsx';
 import DriverHistory from './pages/DriverHistory.jsx';
@@ -65,6 +66,7 @@ export default function App() {
         <Route path="/frota" element={<AdminFrota />} />
         <Route path="/mapa" element={<AdminMapa />} />
         <Route path="/relatorios" element={<AdminRelatorios />} />
+        <Route path="/configuracoes" element={<AdminConfiguracoes />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     );

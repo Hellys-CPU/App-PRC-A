@@ -4,15 +4,17 @@ import { supabase } from '../supabase';
 
 export default function AdminNovaViagem() {
   const [drivers, setDrivers] = useState([]);
+  const [routes, setRoutes] = useState([]);
+  const [clients, setClients] = useState([]);
   const [form, setForm] = useState({
-    driverId: '', origin: '', destination: '',
-    clientName: '', cargoDescription: '', freightValue: '',
+    driverId: '', routeId: '', origin: '', destination: '',
+    clientId: '', cargoDescription: '', freightValue: '',
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => { loadDrivers(); }, []);
+  useEffect(() => { loadDrivers(); loadRoutes(); loadClients(); }, []);
 
   async function loadDrivers() {
     const { data } = await supabase
@@ -20,6 +22,25 @@ export default function AdminNovaViagem() {
       .select('id, vehicle_plate, active, profiles(full_name)')
       .eq('active', true);
     setDrivers(data || []);
+  }
+  async function loadRoutes() {
+    const { data } = await supabase.from('routes').select('*').eq('active', true).order('code');
+    setRoutes(data || []);
+  }
+  async function loadClients() {
+    const { data } = await supabase.from('clients').select('*').eq('active', true).order('name');
+    setClients(data || []);
+  }
+
+  function handleRouteChange(routeId) {
+    const route = routes.find((r) => r.id === routeId);
+    setForm({
+      ...form,
+      routeId,
+      origin: route ? route.origin : form.origin,
+      destination: route ? route.destination : form.destination,
+      freightValue: route?.default_freight_value != null ? String(route.default_freight_value) : form.freightValue,
+    });
   }
 
   async function handleSubmit(e) {
@@ -46,11 +67,15 @@ export default function AdminNovaViagem() {
       return;
     }
 
+    const selectedClient = clients.find((c) => c.id === form.clientId);
+
     const { error } = await supabase.from('trips').insert({
       driver_id: form.driverId,
+      route_id: form.routeId || null,
       origin: form.origin,
       destination: form.destination,
-      client_name: form.clientName || null,
+      client_id: form.clientId || null,
+      client_name: selectedClient ? selectedClient.name : null,
       cargo_description: form.cargoDescription || null,
       freight_value: form.freightValue ? Number(form.freightValue) : null,
       status: 'assigned',
@@ -64,7 +89,7 @@ export default function AdminNovaViagem() {
     }
 
     setMessage({ type: 'success', text: 'Viagem atribuída com sucesso!' });
-    setForm({ driverId: '', origin: '', destination: '', clientName: '', cargoDescription: '', freightValue: '' });
+    setForm({ driverId: '', routeId: '', origin: '', destination: '', clientId: '', cargoDescription: '', freightValue: '' });
   }
 
   return (
@@ -83,6 +108,14 @@ export default function AdminNovaViagem() {
           ))}
         </select>
 
+        <label>Rota cadastrada (opcional)</label>
+        <select value={form.routeId} onChange={(e) => handleRouteChange(e.target.value)}>
+          <option value="">Sem rota cadastrada — preencher manualmente</option>
+          {routes.map((r) => (
+            <option key={r.id} value={r.id}>{r.code} — {r.origin} → {r.destination}</option>
+          ))}
+        </select>
+
         <label>Origem</label>
         <input value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} required />
 
@@ -90,11 +123,12 @@ export default function AdminNovaViagem() {
         <input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} required />
 
         <label>Cliente</label>
-        <input
-          value={form.clientName}
-          onChange={(e) => setForm({ ...form, clientName: e.target.value })}
-          placeholder="Nome do cliente/destinatário da carga"
-        />
+        <select value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })}>
+          <option value="">Sem cliente cadastrado</option>
+          {clients.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
 
         <label>Descrição da carga</label>
         <input

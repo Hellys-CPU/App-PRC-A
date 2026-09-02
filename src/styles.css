@@ -7,41 +7,43 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root, [data-theme="dark"] {
-  --ink: #14181d;
-  --panel: #1d232b;
-  --panel-raised: #242b34;
-  --line: #333b46;
-  --text: #d7dbe0;
-  --text-dim: #838d99;
-  --text-strong: #f5f6f7;
+  --ink: #000000;
+  --panel: #17181a;
+  --panel-raised: #212224;
+  --line: #333333;
+  --text: #d4d4d4;
+  --text-dim: #8a8a8a;
+  --text-strong: #f4f4f4;
 
-  --amber: #f2a93b;
-  --amber-strong: #d6902a;
-  --route: #3b8c6e;
-  --route-strong: #2e6f57;
-  --alert: #d9603b;
+  --amber: #f46101;
+  --amber-strong: #d05300;
+  --route: #2fae6f;
+  --route-strong: #248657;
+  --alert: #e0393f;
   --assigned: #4f80b8;
+  --brand-text: #f4f4f4;
 
-  --shadow: 0 10px 30px rgba(0,0,0,0.35);
+  --shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 [data-theme="light"] {
-  --ink: #eef0f2;
+  --ink: #f2f2f2;
   --panel: #ffffff;
-  --panel-raised: #f5f6f8;
-  --line: #dce1e6;
-  --text: #2a323c;
-  --text-dim: #6b7580;
-  --text-strong: #12161b;
+  --panel-raised: #f5f5f5;
+  --line: #dcdcdc;
+  --text: #2a2a2a;
+  --text-dim: #6b6b6b;
+  --text-strong: #0a0a0a;
 
-  --amber: #c97f16;
-  --amber-strong: #a86910;
-  --route: #2e7d5b;
-  --route-strong: #23604a;
-  --alert: #b8492b;
+  --amber: #d1550a;
+  --amber-strong: #ab4508;
+  --route: #23895c;
+  --route-strong: #1c6e49;
+  --alert: #c62f34;
   --assigned: #35618f;
+  --brand-text: #00302c;
 
-  --shadow: 0 6px 20px rgba(20,24,29,0.10);
+  --shadow: 0 6px 20px rgba(0,0,0,0.12);
 }
 
 body {
@@ -79,26 +81,35 @@ input, select { font-family: 'Inter', sans-serif; }
   gap: 10px;
 }
 .brand-mark {
-  width: 30px;
-  height: 30px;
-  color: var(--text-strong);
+  width: 34px;
+  height: auto;
   flex-shrink: 0;
+  display: block;
 }
 .brand-text {
   display: flex;
   flex-direction: column;
-  line-height: 1.1;
+  line-height: 1.05;
 }
 .brand-name {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 1px;
-  color: var(--text-strong);
+  color: var(--brand-text);
+}
+.brand-tagline {
+  font-size: 10px;
+  color: var(--brand-text);
+  opacity: 0.75;
+  letter-spacing: 2.5px;
+  text-transform: lowercase;
+  margin-top: 1px;
 }
 .brand-subtitle {
   font-size: 11px;
   color: var(--text-dim);
   letter-spacing: 0.4px;
+  margin-top: 2px;
 }
 
 /* ---------- Login ---------- */

@@ -243,6 +243,7 @@ export default function AdminDashboard() {
           <button onClick={() => navigate('/frota')}>Frota</button>
           <button onClick={() => navigate('/mapa')}>Mapa</button>
           <button onClick={() => navigate('/relatorios')}>Relatórios</button>
+          <button onClick={() => navigate('/configuracoes')}>Configurações</button>
           <button className="logout-button" onClick={handleLogout}>Sair</button>
         </div>
       </header>
