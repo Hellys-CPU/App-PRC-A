@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import AdminNav from '../components/AdminNav.jsx';
 import { ROLE_LABELS } from '../hooks/useAdminRole.js';
 import { useToast } from '../components/Toast.jsx';
 
@@ -46,10 +47,8 @@ export default function AdminAdmins() {
 
   return (
     <div className="admin-container">
-      <header className="admin-header">
-        <button className="back-button" onClick={() => navigate('/')}>← Voltar</button>
-        <h1>Logins Administrativos</h1>
-      </header>
+      <AdminNav />
+      <h1 className="page-title">Logins Administrativos</h1>
 
       <form onSubmit={handleSubmit} className="motorista-form" style={{ marginBottom: 28 }}>
         <label>Nome completo</label>

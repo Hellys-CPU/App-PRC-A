@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import AdminNav from '../components/AdminNav.jsx';
 
 const CODE_PATTERN = /^[A-Z0-9]{2,12}_[A-Z0-9]{2,12}$/;
 
@@ -10,10 +11,8 @@ export default function AdminConfiguracoes() {
 
   return (
     <div className="admin-container">
-      <header className="admin-header">
-        <button className="back-button" onClick={() => navigate('/')}>← Voltar</button>
-        <h1>Configurações</h1>
-      </header>
+      <AdminNav />
+      <h1 className="page-title">Configurações</h1>
 
       <div className="mode-switch" style={{ maxWidth: 340, marginBottom: 24 }}>
         <button type="button" className={tab === 'rotas' ? 'active' : ''} onClick={() => setTab('rotas')}>Rotas</button>

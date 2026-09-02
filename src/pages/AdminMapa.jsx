@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import AdminNav from '../components/AdminNav.jsx';
 
 export default function AdminMapa() {
   const mapRef = useRef(null);
@@ -106,10 +107,8 @@ export default function AdminMapa() {
 
   return (
     <div className="admin-container">
-      <header className="admin-header">
-        <button className="back-button" onClick={() => navigate('/')}>← Voltar</button>
-        <h1>Mapa em Tempo Real</h1>
-      </header>
+      <AdminNav />
+      <h1 className="page-title">Mapa em Tempo Real</h1>
 
       {points.length === 0 && (
         <p className="empty-state" style={{ marginBottom: 12 }}>

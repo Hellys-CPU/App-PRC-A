@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import AdminNav from '../components/AdminNav.jsx';
 
 export default function AdminMotoristas() {
   const [form, setForm] = useState({
@@ -49,10 +50,8 @@ export default function AdminMotoristas() {
 
   return (
     <div className="admin-container">
-      <header className="admin-header">
-        <button className="back-button" onClick={() => navigate('/')}>← Voltar</button>
-        <h1>Novo Motorista</h1>
-      </header>
+      <AdminNav />
+      <h1 className="page-title">Novo Motorista</h1>
 
       {vehicles.length === 0 && (
         <p className="error-text">

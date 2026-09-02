@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import AdminNav from '../components/AdminNav.jsx';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -93,10 +94,8 @@ export default function AdminRelatorios() {
 
   return (
     <div className="admin-container">
-      <header className="admin-header">
-        <button className="back-button" onClick={() => navigate('/')}>← Voltar</button>
-        <h1>Relatórios</h1>
-      </header>
+      <AdminNav />
+      <h1 className="page-title">Relatórios</h1>
 
       <form onSubmit={handleSearch} className="trips-toolbar" style={{ alignItems: 'flex-end' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

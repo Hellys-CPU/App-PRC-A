@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import AdminNav from '../components/AdminNav.jsx';
 import { useToast } from '../components/Toast.jsx';
 
 function formatCurrency(v) {
@@ -83,10 +84,8 @@ export default function AdminFinanceiro() {
 
   return (
     <div className="admin-container">
-      <header className="admin-header">
-        <button className="back-button" onClick={() => navigate('/')}>← Voltar</button>
-        <h1>Financeiro</h1>
-      </header>
+      <AdminNav />
+      <h1 className="page-title">Financeiro</h1>
 
       <div className="mode-switch" data-active={tab} style={{ maxWidth: 360, marginBottom: 24 }}>
         <button type="button" className={tab === 'receber' ? 'active' : ''} onClick={() => setTab('receber')}>A Receber</button>

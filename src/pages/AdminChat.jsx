@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import AdminNav from '../components/AdminNav.jsx';
 import { useAdminRole } from '../hooks/useAdminRole.js';
 
 export default function AdminChat() {
@@ -65,10 +66,8 @@ export default function AdminChat() {
 
   return (
     <div className="admin-container">
-      <header className="admin-header">
-        <button className="back-button" onClick={() => navigate('/')}>← Voltar</button>
-        <h1>Chat com Motoristas</h1>
-      </header>
+      <AdminNav />
+      <h1 className="page-title">Chat com Motoristas</h1>
 
       <div className="chat-layout">
         <div className="chat-driver-list">

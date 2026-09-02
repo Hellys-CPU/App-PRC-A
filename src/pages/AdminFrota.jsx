@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import AdminNav from '../components/AdminNav.jsx';
 
 const VEHICLE_TYPES = [
   { value: 'toco', label: 'Toco (1 placa)' },
@@ -74,10 +75,8 @@ export default function AdminFrota() {
 
   return (
     <div className="admin-container">
-      <header className="admin-header">
-        <button className="back-button" onClick={() => navigate('/')}>← Voltar</button>
-        <h1>Frota</h1>
-      </header>
+      <AdminNav />
+      <h1 className="page-title">Frota</h1>
 
       <form onSubmit={handleSubmit} className="motorista-form" style={{ marginBottom: 28 }}>
         <label>Tipo de veículo</label>

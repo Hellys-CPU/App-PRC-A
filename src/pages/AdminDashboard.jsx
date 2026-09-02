@@ -5,6 +5,7 @@ import ThemeToggle from '../components/ThemeToggle.jsx';
 import Brand from '../components/Brand.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { useAdminRole, canAccess } from '../hooks/useAdminRole.js';
+import AdminNav from '../components/AdminNav.jsx';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -261,22 +262,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-container">
-      <header className="admin-header">
-        <Brand subtitle="Central de Operações" />
-        <div className="header-actions">
-          <ThemeToggle />
-          {canAccess(role, 'nova-viagem') && <button onClick={() => navigate('/nova-viagem')}>Nova Viagem</button>}
-          {canAccess(role, 'motoristas') && <button onClick={() => navigate('/motoristas')}>Motoristas</button>}
-          {canAccess(role, 'frota') && <button onClick={() => navigate('/frota')}>Frota</button>}
-          {canAccess(role, 'mapa') && <button onClick={() => navigate('/mapa')}>Mapa</button>}
-          {canAccess(role, 'chat') && <button onClick={() => navigate('/chat')}>Chat</button>}
-          {canAccess(role, 'financeiro') && <button onClick={() => navigate('/financeiro')}>Financeiro</button>}
-          {canAccess(role, 'relatorios') && <button onClick={() => navigate('/relatorios')}>Relatórios</button>}
-          {canAccess(role, 'configuracoes') && <button onClick={() => navigate('/configuracoes')}>Configurações</button>}
-          {canAccess(role, 'admins') && <button onClick={() => navigate('/admins')}>Logins</button>}
-          <button className="logout-button" onClick={handleLogout}>Sair</button>
-        </div>
-      </header>
+      <AdminNav />
+      <h1 className="page-title">Painel</h1>
 
       <div className="cards">
         <div className="card"><h3>{stats.activeDrivers}</h3><p>Motoristas Ativos</p></div>
