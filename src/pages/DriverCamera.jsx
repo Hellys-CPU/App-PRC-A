@@ -97,6 +97,11 @@ export default function DriverCamera() {
         await supabase.from('trips').update({ status: 'in_progress' }).eq('id', tripId);
       }
 
+      // "Fim da Descarga" é a etapa final do fluxo: fecha a viagem automaticamente.
+      if (status === 'fim_descarga') {
+        await supabase.from('trips').update({ status: 'completed' }).eq('id', tripId);
+      }
+
       const { data: stage, error: stageErr } = await supabase
         .from('trip_stages')
         .insert({

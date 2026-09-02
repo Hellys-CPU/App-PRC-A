@@ -63,7 +63,7 @@ export default function AdminDashboard() {
   async function loadData() {
     const { data: driversData } = await supabase
       .from('drivers')
-      .select('id, vehicle_plate, active, profiles(full_name, phone)')
+      .select('id, vehicle_plate, active, profiles(full_name, phone, cnh_validade)')
       .eq('active', true);
     setDrivers(driversData || []);
 
@@ -78,7 +78,7 @@ export default function AdminDashboard() {
     const { data: tripsData } = await supabase
       .from('trips')
       .select(`
-        id, origin, destination, status, created_at,
+        id, origin, destination, status, created_at, client_name, cargo_description, freight_value,
         drivers ( id, vehicle_plate, profiles ( full_name, phone ) ),
         trip_stages ( id, status, recorded_at, latitude, longitude, photos ( id, storage_path ) )
       `)
@@ -130,8 +130,10 @@ export default function AdminDashboard() {
       `Placa: ${plate}`,
       `Data: ${formatDate(trip.created_at)}`,
       `Origem: ${trip.origin || '-'}  →  Destino: ${trip.destination || '-'}`,
-      '',
     ];
+    if (trip.client_name) lines.push(`Cliente: ${trip.client_name}`);
+    if (trip.cargo_description) lines.push(`Carga: ${trip.cargo_description}`);
+    lines.push('');
     (trip.trip_stages || []).forEach((stage) => {
       lines.push(`• ${STAGE_LABELS[stage.status] || stage.status} — ${formatTime(stage.recorded_at)}`);
     });
@@ -185,6 +187,10 @@ export default function AdminDashboard() {
           <strong>{driverName}</strong>
           <span className="kanban-plate">{plate}</span>
           <div className="trip-substatus">{trip.origin} → {trip.destination}</div>
+          {trip.client_name && <div className="trip-substatus">Cliente: {trip.client_name}</div>}
+          {trip.freight_value != null && (
+            <div className="trip-substatus">Frete: {Number(trip.freight_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
+          )}
           <div className="trip-substatus">
             {lastStage
               ? `Última etapa: ${STAGE_LABELS[lastStage.status] || lastStage.status} às ${formatTime(lastStage.recorded_at)}`
@@ -234,6 +240,9 @@ export default function AdminDashboard() {
           <ThemeToggle />
           <button onClick={() => navigate('/nova-viagem')}>Nova Viagem</button>
           <button onClick={() => navigate('/motoristas')}>Motoristas</button>
+          <button onClick={() => navigate('/frota')}>Frota</button>
+          <button onClick={() => navigate('/mapa')}>Mapa</button>
+          <button onClick={() => navigate('/relatorios')}>Relatórios</button>
           <button className="logout-button" onClick={handleLogout}>Sair</button>
         </div>
       </header>
@@ -281,22 +290,31 @@ export default function AdminDashboard() {
       <h2>Motoristas</h2>
       <table className="admin-table">
         <thead>
-          <tr><th>Nome</th><th>Placa</th><th>Telefone</th><th>Contato</th></tr>
+          <tr><th>Nome</th><th>Placa</th><th>Telefone</th><th>CNH</th><th>Contato</th></tr>
         </thead>
         <tbody>
-          {drivers.map((d) => (
-            <tr key={d.id}>
-              <td>{d.profiles?.full_name}</td>
-              <td>{d.vehicle_plate}</td>
-              <td>{d.profiles?.phone}</td>
-              <td className="contact-cell">
-                <a href={`tel:${d.profiles?.phone}`} title="Ligar">📞</a>
-                <a href={`https://wa.me/55${d.profiles?.phone}`} target="_blank" rel="noreferrer" title="WhatsApp">💬</a>
-              </td>
-            </tr>
-          ))}
+          {drivers.map((d) => {
+            const cnhDate = d.profiles?.cnh_validade;
+            const daysLeft = cnhDate ? Math.ceil((new Date(cnhDate).getTime() - Date.now()) / 86400000) : null;
+            const cnhWarning = daysLeft != null && daysLeft <= 30;
+            return (
+              <tr key={d.id}>
+                <td>{d.profiles?.full_name}</td>
+                <td>{d.vehicle_plate}</td>
+                <td>{d.profiles?.phone}</td>
+                <td style={cnhWarning ? { color: 'var(--alert)', fontWeight: 700 } : undefined}>
+                  {cnhDate ? new Date(cnhDate).toLocaleDateString('pt-BR') : '-'}
+                  {cnhWarning && (daysLeft >= 0 ? ` (${daysLeft}d)` : ' (vencida)')}
+                </td>
+                <td className="contact-cell">
+                  <a href={`tel:${d.profiles?.phone}`} title="Ligar">📞</a>
+                  <a href={`https://wa.me/55${d.profiles?.phone}`} target="_blank" rel="noreferrer" title="WhatsApp">💬</a>
+                </td>
+              </tr>
+            );
+          })}
           {drivers.length === 0 && (
-            <tr><td colSpan="4" className="empty-state">Nenhum motorista cadastrado ainda.</td></tr>
+            <tr><td colSpan="5" className="empty-state">Nenhum motorista cadastrado ainda.</td></tr>
           )}
         </tbody>
       </table>

@@ -4,14 +4,15 @@ import { supabase } from '../supabase';
 
 export default function AdminNovaViagem() {
   const [drivers, setDrivers] = useState([]);
-  const [form, setForm] = useState({ driverId: '', origin: '', destination: '' });
+  const [form, setForm] = useState({
+    driverId: '', origin: '', destination: '',
+    clientName: '', cargoDescription: '', freightValue: '',
+  });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    loadDrivers();
-  }, []);
+  useEffect(() => { loadDrivers(); }, []);
 
   async function loadDrivers() {
     const { data } = await supabase
@@ -32,7 +33,6 @@ export default function AdminNovaViagem() {
       return;
     }
 
-    // Verifica se o motorista já tem viagem em aberto (atribuída ou em andamento)
     const { data: existing } = await supabase
       .from('trips')
       .select('id')
@@ -50,6 +50,9 @@ export default function AdminNovaViagem() {
       driver_id: form.driverId,
       origin: form.origin,
       destination: form.destination,
+      client_name: form.clientName || null,
+      cargo_description: form.cargoDescription || null,
+      freight_value: form.freightValue ? Number(form.freightValue) : null,
       status: 'assigned',
     });
 
@@ -61,7 +64,7 @@ export default function AdminNovaViagem() {
     }
 
     setMessage({ type: 'success', text: 'Viagem atribuída com sucesso!' });
-    setForm({ driverId: '', origin: '', destination: '' });
+    setForm({ driverId: '', origin: '', destination: '', clientName: '', cargoDescription: '', freightValue: '' });
   }
 
   return (
@@ -73,31 +76,41 @@ export default function AdminNovaViagem() {
 
       <form onSubmit={handleSubmit} className="motorista-form">
         <label>Motorista</label>
-        <select
-          value={form.driverId}
-          onChange={(e) => setForm({ ...form, driverId: e.target.value })}
-          required
-        >
+        <select value={form.driverId} onChange={(e) => setForm({ ...form, driverId: e.target.value })} required>
           <option value="">Selecione um motorista</option>
           {drivers.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.profiles?.full_name} — {d.vehicle_plate}
-            </option>
+            <option key={d.id} value={d.id}>{d.profiles?.full_name} — {d.vehicle_plate}</option>
           ))}
         </select>
 
         <label>Origem</label>
-        <input
-          value={form.origin}
-          onChange={(e) => setForm({ ...form, origin: e.target.value })}
-          required
-        />
+        <input value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} required />
 
         <label>Destino</label>
+        <input value={form.destination} onChange={(e) => setForm({ ...form, destination: e.target.value })} required />
+
+        <label>Cliente</label>
         <input
-          value={form.destination}
-          onChange={(e) => setForm({ ...form, destination: e.target.value })}
-          required
+          value={form.clientName}
+          onChange={(e) => setForm({ ...form, clientName: e.target.value })}
+          placeholder="Nome do cliente/destinatário da carga"
+        />
+
+        <label>Descrição da carga</label>
+        <input
+          value={form.cargoDescription}
+          onChange={(e) => setForm({ ...form, cargoDescription: e.target.value })}
+          placeholder="Ex: 12 paletes de eletrônicos"
+        />
+
+        <label>Valor do frete (R$)</label>
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          value={form.freightValue}
+          onChange={(e) => setForm({ ...form, freightValue: e.target.value })}
+          placeholder="0,00"
         />
 
         {message && (
