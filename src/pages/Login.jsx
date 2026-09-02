@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase, cpfToInternalEmail, cleanCpf } from '../supabase';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 export default function Login() {
   const [mode, setMode] = useState('cpf'); // 'cpf' (motorista) | 'email' (admin)
@@ -25,6 +26,7 @@ export default function Login() {
   return (
     <div className="auth-container">
       <div className="auth-card">
+        <div className="auth-theme-toggle"><ThemeToggle /></div>
         <h1>PRC App</h1>
         <p className="subtitle">Controle de Viagens</p>
 

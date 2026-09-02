@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -10,16 +11,19 @@ const STAGE_LABELS = {
   parada_eventual: 'Parada Eventual',
 };
 
+const COLUMNS = [
+  { key: 'assigned', title: 'Atribuídas' },
+  { key: 'in_progress', title: 'Em Andamento' },
+  { key: 'completed', title: 'Finalizadas' },
+];
+
 function formatTime(iso) {
   if (!iso) return '--:--';
-  const d = new Date(iso);
-  return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
-
 function formatDate(iso) {
   if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleDateString('pt-BR');
+  return new Date(iso).toLocaleDateString('pt-BR');
 }
 
 export default function AdminDashboard() {
@@ -33,13 +37,11 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     loadData();
-
     const channel = supabase
       .channel('trip_stages_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_stages' }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trips' }, () => loadData())
       .subscribe();
-
     return () => supabase.removeChannel(channel);
   }, []);
 
@@ -55,31 +57,24 @@ export default function AdminDashboard() {
 
     const { count: activeTrips } = await supabase
       .from('trips').select('*', { count: 'exact', head: true }).eq('status', 'in_progress');
-
     const { count: todayStages } = await supabase
       .from('trip_stages').select('*', { count: 'exact', head: true }).gte('recorded_at', todayStart.toISOString());
 
     setStats({ activeDrivers: driversData?.length || 0, activeTrips: activeTrips || 0, todayStages: todayStages || 0 });
 
-    // Busca viagens de hoje (ou em andamento) com motorista e etapas + fotos
     const { data: tripsData } = await supabase
       .from('trips')
       .select(`
         id, origin, destination, status, created_at,
         drivers ( id, vehicle_plate, profiles ( full_name, phone ) ),
-        trip_stages (
-          id, status, recorded_at, latitude, longitude,
-          photos ( id, storage_path )
-        )
+        trip_stages ( id, status, recorded_at, latitude, longitude, photos ( id, storage_path ) )
       `)
-      .or(`status.eq.in_progress,created_at.gte.${todayStart.toISOString()}`)
+      .or(`status.eq.in_progress,status.eq.assigned,created_at.gte.${todayStart.toISOString()}`)
       .order('created_at', { ascending: false });
 
     const sorted = (tripsData || []).map((t) => ({
       ...t,
-      trip_stages: [...(t.trip_stages || [])].sort(
-        (a, b) => new Date(a.recorded_at) - new Date(b.recorded_at)
-      ),
+      trip_stages: [...(t.trip_stages || [])].sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at)),
     }));
 
     setTrips(sorted);
@@ -87,22 +82,13 @@ export default function AdminDashboard() {
   }
 
   async function toggleExpand(tripId, stages) {
-    if (expandedTrip === tripId) {
-      setExpandedTrip(null);
-      return;
-    }
+    if (expandedTrip === tripId) { setExpandedTrip(null); return; }
     setExpandedTrip(tripId);
-
-    // Gera signed URLs pras fotos dessa viagem que ainda não tem URL carregada
     for (const stage of stages) {
       for (const photo of stage.photos || []) {
         if (photoUrls[photo.id]) continue;
-        const { data } = await supabase.storage
-          .from('trip-photos')
-          .createSignedUrl(photo.storage_path, 3600);
-        if (data?.signedUrl) {
-          setPhotoUrls((prev) => ({ ...prev, [photo.id]: data.signedUrl }));
-        }
+        const { data } = await supabase.storage.from('trip-photos').createSignedUrl(photo.storage_path, 3600);
+        if (data?.signedUrl) setPhotoUrls((prev) => ({ ...prev, [photo.id]: data.signedUrl }));
       }
     }
   }
@@ -110,20 +96,19 @@ export default function AdminDashboard() {
   function buildWhatsAppText(trip) {
     const driverName = trip.drivers?.profiles?.full_name || 'Motorista';
     const plate = trip.drivers?.vehicle_plate || '-';
-    const dateLabel = formatDate(trip.created_at);
     const lines = [
       `*Viagem — ${driverName}*`,
       `Placa: ${plate}`,
-      `Data: ${dateLabel}`,
+      `Data: ${formatDate(trip.created_at)}`,
       `Origem: ${trip.origin || '-'}  →  Destino: ${trip.destination || '-'}`,
       '',
     ];
     (trip.trip_stages || []).forEach((stage) => {
-      const label = STAGE_LABELS[stage.status] || stage.status;
-      lines.push(`• ${label} — ${formatTime(stage.recorded_at)}`);
+      lines.push(`• ${STAGE_LABELS[stage.status] || stage.status} — ${formatTime(stage.recorded_at)}`);
     });
     lines.push('');
-    lines.push(trip.status === 'in_progress' ? 'Status: EM ANDAMENTO' : 'Status: FINALIZADA');
+    const statusLabel = trip.status === 'in_progress' ? 'EM ANDAMENTO' : trip.status === 'completed' ? 'FINALIZADA' : 'ATRIBUÍDA';
+    lines.push(`Status: ${statusLabel}`);
     return lines.join('\n');
   }
 
@@ -131,8 +116,7 @@ export default function AdminDashboard() {
     const text = buildWhatsAppText(trip);
     const phone = trip.drivers?.profiles?.phone;
     const base = phone ? `https://wa.me/55${phone}` : 'https://wa.me/';
-    const url = `${base}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    window.open(`${base}?text=${encodeURIComponent(text)}`, '_blank');
   }
 
   async function copyToClipboard(trip) {
@@ -145,8 +129,57 @@ export default function AdminDashboard() {
     }
   }
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
+  async function handleLogout() { await supabase.auth.signOut(); }
+
+  function renderTripCard(trip) {
+    const driverName = trip.drivers?.profiles?.full_name || 'Motorista';
+    const plate = trip.drivers?.vehicle_plate || '-';
+    const stages = trip.trip_stages || [];
+    const lastStage = stages[stages.length - 1];
+    const isExpanded = expandedTrip === trip.id;
+
+    return (
+      <div key={trip.id} className={`kanban-card status-${trip.status}`}>
+        <div className="kanban-card-header" onClick={() => toggleExpand(trip.id, stages)}>
+          <strong>{driverName}</strong>
+          <span className="kanban-plate">{plate}</span>
+          <div className="trip-substatus">
+            {trip.origin} → {trip.destination}
+          </div>
+          <div className="trip-substatus">
+            {lastStage
+              ? `Última etapa: ${STAGE_LABELS[lastStage.status] || lastStage.status} às ${formatTime(lastStage.recorded_at)}`
+              : 'Sem etapas registradas'}
+          </div>
+        </div>
+
+        {isExpanded && (
+          <div className="trip-card-body">
+            <div className="stages-timeline">
+              {stages.length === 0 && <p className="empty-state">Nenhuma etapa registrada.</p>}
+              {stages.map((stage) => {
+                const photo = stage.photos?.[0];
+                return (
+                  <div key={stage.id} className="stage-row">
+                    <div className="stage-info">
+                      <strong>{STAGE_LABELS[stage.status] || stage.status}</strong>
+                      <span>{formatTime(stage.recorded_at)}</span>
+                    </div>
+                    {photo && photoUrls[photo.id] && (
+                      <img src={photoUrls[photo.id]} alt="Registro" className="stage-photo" />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="trip-actions">
+              <button className="secondary-button" onClick={() => copyToClipboard(trip)}>Copiar texto</button>
+              <button className="primary-button" onClick={() => sendToWhatsApp(trip)}>Enviar no WhatsApp</button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -154,6 +187,7 @@ export default function AdminDashboard() {
       <header className="admin-header">
         <h1>Painel Administrativo</h1>
         <div className="header-actions">
+          <ThemeToggle />
           <button onClick={() => navigate('/nova-viagem')}>Nova Viagem</button>
           <button onClick={() => navigate('/motoristas')}>Motoristas</button>
           <button className="logout-button" onClick={handleLogout}>Sair</button>
@@ -166,70 +200,28 @@ export default function AdminDashboard() {
         <div className="card"><h3>{stats.todayStages}</h3><p>Registros Hoje</p></div>
       </div>
 
-      <h2>Viagens de Hoje</h2>
+      <h2>Viagens</h2>
       {loading && <p className="empty-state">Carregando...</p>}
-      {!loading && trips.length === 0 && (
-        <p className="empty-state">Nenhuma viagem registrada hoje ainda.</p>
-      )}
 
-      <div className="trips-list">
-        {trips.map((trip) => {
-          const driverName = trip.drivers?.profiles?.full_name || 'Motorista';
-          const plate = trip.drivers?.vehicle_plate || '-';
-          const stages = trip.trip_stages || [];
-          const lastStage = stages[stages.length - 1];
-          const isExpanded = expandedTrip === trip.id;
-
-          return (
-            <div key={trip.id} className={`trip-card ${trip.status === 'in_progress' ? 'trip-active' : 'trip-done'}`}>
-              <div className="trip-card-header" onClick={() => toggleExpand(trip.id, stages)}>
-                <div>
-                  <strong>{driverName}</strong> — {plate}
-                  <div className="trip-substatus">
-                    {lastStage
-                      ? `Última etapa: ${STAGE_LABELS[lastStage.status] || lastStage.status} às ${formatTime(lastStage.recorded_at)}`
-                      : 'Sem etapas registradas'}
-                  </div>
+      {!loading && (
+        <div className="kanban-board">
+          {COLUMNS.map((col) => {
+            const colTrips = trips.filter((t) => t.status === col.key);
+            return (
+              <div key={col.key} className="kanban-column">
+                <div className="kanban-column-header">
+                  <span>{col.title}</span>
+                  <span className="kanban-count">{colTrips.length}</span>
                 </div>
-                <span className={`trip-badge ${trip.status === 'in_progress' ? 'badge-active' : 'badge-done'}`}>
-                  {trip.status === 'in_progress' ? 'Em andamento' : 'Finalizada'}
-                </span>
+                <div className="kanban-column-body">
+                  {colTrips.length === 0 && <p className="empty-state small">Nenhuma viagem</p>}
+                  {colTrips.map(renderTripCard)}
+                </div>
               </div>
-
-              {isExpanded && (
-                <div className="trip-card-body">
-                  <div className="stages-timeline">
-                    {stages.length === 0 && <p className="empty-state">Nenhuma etapa registrada.</p>}
-                    {stages.map((stage) => {
-                      const photo = stage.photos?.[0];
-                      return (
-                        <div key={stage.id} className="stage-row">
-                          <div className="stage-info">
-                            <strong>{STAGE_LABELS[stage.status] || stage.status}</strong>
-                            <span>{formatTime(stage.recorded_at)}</span>
-                          </div>
-                          {photo && photoUrls[photo.id] && (
-                            <img src={photoUrls[photo.id]} alt="Registro" className="stage-photo" />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="trip-actions">
-                    <button className="secondary-button" onClick={() => copyToClipboard(trip)}>
-                      Copiar texto
-                    </button>
-                    <button className="primary-button" onClick={() => sendToWhatsApp(trip)}>
-                      Enviar no WhatsApp
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       <h2>Motoristas</h2>
       <table className="admin-table">

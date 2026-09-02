@@ -387,3 +387,147 @@ body {
   color: #e5e7eb;
 }
 .no-trip-box .subtitle { margin-top: 6px; }
+
+/* ============================================================
+   TEMA CLARO / ESCURO — via data-theme no <html>
+   ============================================================ */
+:root, [data-theme="dark"] {
+  --bg: #0f1117;
+  --bg-card: #1a1d29;
+  --border: #2d3142;
+  --text: #e5e7eb;
+  --text-dim: #9ca3af;
+  --text-strong: #ffffff;
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+}
+
+[data-theme="light"] {
+  --bg: #f3f4f6;
+  --bg-card: #ffffff;
+  --border: #e5e7eb;
+  --text: #1f2937;
+  --text-dim: #6b7280;
+  --text-strong: #0f1117;
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+}
+
+body { background: var(--bg); color: var(--text); }
+
+.auth-card, .card, .admin-table, .motorista-form, .history-item, .trip-card,
+.kanban-card, .kanban-column, .no-trip-box, .current-trip-box {
+  background: var(--bg-card);
+}
+
+.auth-card h1, .admin-header h1, .driver-header h2, .camera-header h3,
+.history-status, .card h3, .trip-route { color: var(--text-strong); }
+
+.subtitle, .card p, .admin-table th, .trip-substatus, .history-time,
+.empty-state, .stage-info span { color: var(--text-dim); }
+
+.admin-table td, .stage-info strong { color: var(--text); }
+
+.auth-card input, .motorista-form input, .motorista-form select,
+.mode-switch { background: var(--bg); border-color: var(--border); color: var(--text); }
+
+.admin-table th, .admin-table td, .trip-card-body,
+.header-actions button, .logout-button, .back-button,
+.history-link { border-color: var(--border); }
+
+.header-actions button, .logout-button, .back-button {
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.theme-toggle {
+  font-size: 18px;
+  padding: 8px 12px !important;
+}
+
+/* ============================================================
+   KANBAN BOARD
+   ============================================================ */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+@media (max-width: 900px) {
+  .kanban-board { grid-template-columns: 1fr; }
+}
+
+.kanban-column {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 12px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kanban-column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px 10px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  color: var(--text-strong);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.kanban-count {
+  background: var(--border);
+  color: var(--text);
+  border-radius: 20px;
+  font-size: 12px;
+  padding: 2px 10px;
+  font-weight: 700;
+}
+
+.kanban-column-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty-state.small { padding: 12px; font-size: 13px; }
+
+.kanban-card {
+  background: var(--bg);
+  border-radius: 12px;
+  border-left: 4px solid var(--border);
+  overflow: hidden;
+}
+.kanban-card.status-assigned { border-left-color: #60a5fa; }
+.kanban-card.status-in_progress { border-left-color: #f59e0b; }
+.kanban-card.status-completed { border-left-color: #10b981; }
+
+.kanban-card-header {
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: relative;
+}
+.kanban-card-header strong { color: var(--text-strong); font-size: 14px; }
+.kanban-plate {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.auth-theme-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}

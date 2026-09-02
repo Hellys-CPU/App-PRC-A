@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 const STATUSES = [
   { key: 'apresentacao_base_origem', label: 'Apresentação na Base Origem', color: '#2563eb' },
@@ -89,7 +90,10 @@ export default function DriverHome() {
             {trip ? 'Toque em uma etapa para registrar' : 'Aguardando viagem'}
           </p>
         </div>
-        <button className="logout-button" onClick={handleLogout}>Sair</button>
+        <div className="header-actions">
+          <ThemeToggle />
+          <button className="logout-button" onClick={handleLogout}>Sair</button>
+        </div>
       </header>
 
       {loadingTrip && <p className="empty-state">Carregando...</p>}
