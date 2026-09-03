@@ -13,6 +13,7 @@ import AdminConfiguracoes from './pages/AdminConfiguracoes.jsx';
 import AdminFinanceiro from './pages/AdminFinanceiro.jsx';
 import AdminChat from './pages/AdminChat.jsx';
 import AdminAdmins from './pages/AdminAdmins.jsx';
+import AdminChangelog from './pages/AdminChangelog.jsx';
 import RequireRole from './components/RequireRole.jsx';
 import DriverChat from './pages/DriverChat.jsx';
 import DriverHome from './pages/DriverHome.jsx';
@@ -80,6 +81,7 @@ export default function App() {
           <Route path="/financeiro" element={<RequireRole page="financeiro"><AdminFinanceiro /></RequireRole>} />
           <Route path="/chat" element={<RequireRole page="chat"><AdminChat /></RequireRole>} />
           <Route path="/admins" element={<RequireRole page="admins"><AdminAdmins /></RequireRole>} />
+          <Route path="/changelog" element={<RequireRole page="changelog"><AdminChangelog /></RequireRole>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
         <InstallPrompt />

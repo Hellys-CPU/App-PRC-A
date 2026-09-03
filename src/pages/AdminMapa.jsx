@@ -37,13 +37,16 @@ export default function AdminMapa() {
     markersLayer.current.clearLayers();
 
     points.forEach((p) => {
-      const marker = window.L.circleMarker([p.latitude, p.longitude], {
-        radius: 9,
-        color: p.status === 'in_progress' ? '#f2a93b' : '#4f80b8',
-        fillColor: p.status === 'in_progress' ? '#f2a93b' : '#4f80b8',
-        fillOpacity: 0.85,
-        weight: 2,
-      }).addTo(markersLayer.current);
+      const bgColor = p.status === 'in_progress' ? '#f46101' : '#4f80b8';
+      const icon = window.L.divIcon({
+        className: 'truck-marker',
+        html: `<div class="truck-marker-pin" style="background:${bgColor}"><span>🚚</span></div><div class="truck-marker-plate">${p.plate}</div>`,
+        iconSize: [36, 50],
+        iconAnchor: [18, 40],
+        popupAnchor: [0, -40],
+      });
+
+      const marker = window.L.marker([p.latitude, p.longitude], { icon }).addTo(markersLayer.current);
 
       marker.bindPopup(
         `<strong>${p.driverName}</strong><br/>${p.plate}<br/>${p.stageLabel}<br/>${p.recordedAt}`
@@ -112,7 +115,8 @@ export default function AdminMapa() {
 
       {points.length === 0 && (
         <p className="empty-state" style={{ marginBottom: 12 }}>
-          Nenhuma viagem em andamento com localização registrada no momento.
+          Nenhuma viagem "Em Trânsito" agora. O mapa só mostra viagens em andamento — assim que
+          uma etapa for registrada ou o motorista estiver com o app aberto em viagem, o caminhão aparece aqui.
         </p>
       )}
 

@@ -6,6 +6,7 @@ import Brand from '../components/Brand.jsx';
 import { useToast } from '../components/Toast.jsx';
 import AdminNav from '../components/AdminNav.jsx';
 import { useAdminRole, pageAllowed } from '../hooks/useAdminRole.js';
+import NewTripModal from '../components/NewTripModal.jsx';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -71,8 +72,11 @@ export default function AdminDashboard() {
   const [photoUrls, setPhotoUrls] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [isLive, setIsLive] = useState(false);
+  const [, forceTick] = useState(0);
   const navigate = useNavigate();
   const { permissions } = useAdminRole();
+  const [showNewTrip, setShowNewTrip] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
@@ -81,8 +85,14 @@ export default function AdminDashboard() {
       .channel('trip_stages_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_stages' }, () => loadData())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trips' }, () => loadData())
-      .subscribe();
+      .subscribe((status) => setIsLive(status === 'SUBSCRIBED'));
     return () => supabase.removeChannel(channel);
+  }, []);
+
+  // Faz os "parada Xh Ym" dos cards andarem sozinhos, sem esperar um evento novo do banco.
+  useEffect(() => {
+    const tick = setInterval(() => forceTick((n) => n + 1), 30000);
+    return () => clearInterval(tick);
   }, []);
 
   async function loadData() {
@@ -263,7 +273,12 @@ export default function AdminDashboard() {
   return (
     <div className="admin-container">
       <AdminNav />
-      <h1 className="page-title">Painel</h1>
+      <h1 className="page-title">
+        Painel
+        <span className={`rt-badge${isLive ? '' : ' rt-offline'}`}>
+          <span className="rt-dot" /> {isLive ? 'Ao vivo' : 'Conectando...'}
+        </span>
+      </h1>
 
       <div className="cards">
         <div className="card"><h3>{stats.activeDrivers}</h3><p>Motoristas Ativos</p></div>
@@ -274,7 +289,7 @@ export default function AdminDashboard() {
       <div className="section-header-row">
         <h2 style={{ margin: 0 }}>Viagens</h2>
         {pageAllowed(permissions, 'nova-viagem') && (
-          <button className="primary-button" style={{ width: 'auto', padding: '10px 18px' }} onClick={() => navigate('/nova-viagem')}>
+          <button className="primary-button" style={{ width: 'auto', padding: '10px 18px' }} onClick={() => setShowNewTrip(true)}>
             + Nova Viagem
           </button>
         )}
@@ -343,6 +358,13 @@ export default function AdminDashboard() {
           )}
         </tbody>
       </table>
+
+      {showNewTrip && (
+        <NewTripModal
+          onClose={() => setShowNewTrip(false)}
+          onCreated={loadData}
+        />
+      )}
     </div>
   );
 }

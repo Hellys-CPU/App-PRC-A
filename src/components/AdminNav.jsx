@@ -16,6 +16,7 @@ const TABS = [
   { page: 'relatorios', path: '/relatorios', label: 'Relatórios' },
   { page: 'configuracoes', path: '/configuracoes', label: 'Configurações' },
   { page: 'admins', path: '/admins', label: 'Admin' },
+  { page: 'changelog', path: '/changelog', label: 'Novidades' },
 ];
 
 export default function AdminNav() {

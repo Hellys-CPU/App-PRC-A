@@ -36,17 +36,18 @@ export const ALL_PAGES = [
   { key: 'relatorios', label: 'Relatórios' },
   { key: 'configuracoes', label: 'Configurações' },
   { key: 'admins', label: 'Admin' },
+  { key: 'changelog', label: 'Novidades' },
 ];
 
 // Padrão de cada nível de acesso — só é usado quando o usuário NÃO tem permissão personalizada.
 // Configurações (rotas/clientes/valores de frete) fica só com Diretoria.
 export const ROLE_PERMISSIONS = {
-  diretoria: ['dashboard', 'nova-viagem', 'motoristas', 'frota', 'configuracoes', 'mapa', 'relatorios', 'financeiro', 'chat', 'admins'],
-  operacional: ['dashboard', 'nova-viagem', 'motoristas', 'frota'],
-  financeiro: ['dashboard', 'financeiro', 'relatorios'],
-  trafego: ['dashboard', 'mapa', 'chat'],
-  captacao: ['dashboard', 'motoristas'],
-  manutencao: ['dashboard', 'frota'],
+  diretoria: ['dashboard', 'nova-viagem', 'motoristas', 'frota', 'configuracoes', 'mapa', 'relatorios', 'financeiro', 'chat', 'admins', 'changelog'],
+  operacional: ['dashboard', 'nova-viagem', 'motoristas', 'frota', 'changelog'],
+  financeiro: ['dashboard', 'financeiro', 'relatorios', 'changelog'],
+  trafego: ['dashboard', 'mapa', 'chat', 'changelog'],
+  captacao: ['dashboard', 'motoristas', 'changelog'],
+  manutencao: ['dashboard', 'frota', 'changelog'],
 };
 
 export function pageAllowed(permissions, page) {

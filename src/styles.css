@@ -915,3 +915,166 @@ h2 {
   color: var(--text);
   font-size: 13px;
 }
+
+/* ---------- Indicador "Ao Vivo" (inspirado no TRK PCP) ---------- */
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--route);
+  background: rgba(47, 174, 111, 0.12);
+  border: 1px solid var(--route);
+  padding: 3px 9px;
+  text-transform: none;
+  letter-spacing: 0.2px;
+}
+.rt-badge.rt-offline {
+  color: var(--text-dim);
+  background: transparent;
+  border-color: var(--line);
+}
+.rt-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--route);
+  animation: rtpulse 2s infinite;
+}
+.rt-offline .rt-dot { background: var(--text-dim); animation: none; }
+@keyframes rtpulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* ---------- Hover em linhas de tabela e cards do Kanban ---------- */
+.admin-table tbody tr { transition: background-color 0.12s; }
+.admin-table tbody tr:hover { background: var(--panel-raised); }
+
+.kanban-card { transition: transform 0.12s, box-shadow 0.12s; }
+.kanban-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+}
+
+/* ---------- Changelog / Novidades ---------- */
+.changelog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 720px;
+}
+.changelog-entry {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--amber);
+  padding: 16px 20px;
+}
+.changelog-entry-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.changelog-version {
+  font-family: 'Oswald', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+.changelog-date {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.changelog-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.changelog-items li {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ---------- Modal (Nova Viagem rápida) ---------- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  animation: toastIn 0.2s ease;
+}
+.modal-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--amber);
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow);
+  animation: cardReveal 0.2s ease;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+  padding: 4px 8px;
+}
+.modal-close:hover { color: var(--alert); }
+
+/* ---------- Mensagem de chat pendente (offline) ---------- */
+.chat-pending { opacity: 0.6; }
+.chat-pending .chat-bubble-time { color: var(--alert) !important; opacity: 1; }
+
+/* ---------- Marcador de caminhão no mapa (Leaflet) ---------- */
+.truck-marker { background: transparent; border: none; }
+.truck-marker-pin {
+  width: 36px;
+  height: 36px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+  border: 2px solid #fff;
+}
+.truck-marker-pin {
+  font-size: 16px;
+}
+.truck-marker-pin > * { display: inline-block; transform: rotate(45deg); }
+.truck-marker-plate {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0,0,0,0.65);
+  padding: 1px 6px;
+  margin-top: 2px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  position: relative;
+  left: 50%;
+  width: fit-content;
+}
