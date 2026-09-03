@@ -15,7 +15,6 @@ const TABS = [
   { page: 'financeiro', path: '/financeiro', label: 'Financeiro' },
   { page: 'relatorios', path: '/relatorios', label: 'Relatórios' },
   { page: 'configuracoes', path: '/configuracoes', label: 'Configurações' },
-  { page: 'admins', path: '/admins', label: 'Admin' },
   { page: 'changelog', path: '/changelog', label: 'Novidades' },
 ];
 

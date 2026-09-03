@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import { reverseGeocode } from '../lib/geocode.js';
 
 const LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -9,6 +10,61 @@ const LABELS = {
   fim_descarga: 'Fim da Descarga',
   parada_eventual: 'Parada Eventual',
 };
+
+const ONE_TIME_STATUSES = ['apresentacao_base_origem', 'saida_base_origem', 'chegada_base_destino', 'fim_descarga'];
+
+// Desenha a marca d'água (nome, placa(s), endereço, data/hora) direto no canvas da foto.
+function drawStamp(ctx, width, height, info) {
+  const fontSize = Math.max(Math.round(width * 0.024), 16);
+  const lineHeight = Math.round(fontSize * 1.4);
+
+  const lines = [`PRC Transportes — ${info.stageLabel}`];
+  if (info.driverName) lines.push(`Motorista: ${info.driverName}`);
+  lines.push(info.plateReboque ? `Placa: ${info.plate} / ${info.plateReboque}` : `Placa: ${info.plate || '-'}`);
+  if (info.address) {
+    lines.push(`Local: ${info.address}`);
+  } else if (info.coords) {
+    lines.push(`Local (coordenada): ${info.coords.latitude.toFixed(5)}, ${info.coords.longitude.toFixed(5)}`);
+  } else {
+    lines.push('Local: não disponível');
+  }
+  lines.push(new Date().toLocaleString('pt-BR'));
+
+  // Quebra linhas muito longas (endereço) pra caber na largura da foto.
+  const maxCharsPerLine = Math.max(Math.floor(width / (fontSize * 0.52)), 10);
+  const wrapped = [];
+  lines.forEach((line) => {
+    let remaining = line;
+    while (remaining.length > maxCharsPerLine) {
+      let cut = remaining.lastIndexOf(' ', maxCharsPerLine);
+      if (cut <= 0) cut = maxCharsPerLine;
+      wrapped.push(remaining.slice(0, cut));
+      remaining = remaining.slice(cut).trim();
+    }
+    wrapped.push(remaining);
+  });
+
+  const boxHeight = wrapped.length * lineHeight + fontSize * 0.8;
+  const gradient = ctx.createLinearGradient(0, height - boxHeight, 0, height);
+  gradient.addColorStop(0, 'rgba(0,0,0,0)');
+  gradient.addColorStop(0.5, 'rgba(0,0,0,0.28)');
+  gradient.addColorStop(1, 'rgba(0,0,0,0.48)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, height - boxHeight, width, boxHeight);
+
+  ctx.font = `${fontSize}px sans-serif`;
+  ctx.fillStyle = '#ffffff';
+  ctx.textBaseline = 'bottom';
+  ctx.shadowColor = 'rgba(0,0,0,0.85)';
+  ctx.shadowBlur = 4;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 1;
+  let y = height - fontSize * 0.6;
+  for (let i = wrapped.length - 1; i >= 0; i--) {
+    ctx.fillText(wrapped[i], Math.round(fontSize * 0.6), y);
+    y -= lineHeight;
+  }
+}
 
 export default function DriverCamera() {
   const { status } = useParams();
@@ -20,12 +76,81 @@ export default function DriverCamera() {
   const [saving, setSaving] = useState(false);
   const [flash, setFlash] = useState(false);
   const [coords, setCoords] = useState(null);
+  const [blocked, setBlocked] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [stamping, setStamping] = useState(false);
+  const [driverInfo, setDriverInfo] = useState(null);
 
   useEffect(() => {
-    startCamera();
-    requestLocation();
+    checkAlreadyDone();
+    loadDriverInfo();
     return () => stopCamera();
   }, []);
+
+  async function loadDriverInfo() {
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData?.user?.id;
+    if (!uid) return;
+
+    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', uid).maybeSingle();
+    const { data: driver } = await supabase.from('drivers').select('vehicle_id, vehicle_plate').eq('id', uid).maybeSingle();
+
+    let plate = driver?.vehicle_plate || '-';
+    let plateReboque = null;
+
+    if (driver?.vehicle_id) {
+      const { data: vehicle } = await supabase
+        .from('vehicles')
+        .select('plate, plate_reboque')
+        .eq('id', driver.vehicle_id)
+        .maybeSingle();
+      if (vehicle) {
+        plate = vehicle.plate;
+        plateReboque = vehicle.plate_reboque;
+      }
+    }
+
+    setDriverInfo({ name: profile?.full_name || 'Motorista', plate, plateReboque });
+  }
+
+  async function checkAlreadyDone() {
+    if (!ONE_TIME_STATUSES.includes(status)) {
+      setChecking(false);
+      startCamera();
+      requestLocation();
+      return;
+    }
+
+    const { data: userData } = await supabase.auth.getUser();
+    const driverId = userData?.user?.id;
+    const { data: currentTrip } = await supabase
+      .from('trips')
+      .select('id')
+      .eq('driver_id', driverId)
+      .in('status', ['assigned', 'in_progress'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (currentTrip) {
+      const { data: existing } = await supabase
+        .from('trip_stages')
+        .select('id')
+        .eq('trip_id', currentTrip.id)
+        .eq('status', status)
+        .maybeSingle();
+
+      if (existing) {
+        setBlocked(true);
+        setChecking(false);
+        return;
+      }
+    }
+
+    setChecking(false);
+    startCamera();
+    requestLocation();
+  }
 
   async function startCamera() {
     try {
@@ -53,17 +178,38 @@ export default function DriverCamera() {
     );
   }
 
-  function capturePhoto() {
+  async function capturePhoto() {
     const video = videoRef.current;
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+
     setFlash(true);
     setTimeout(() => setFlash(false), 350);
-    setPhotoDataUrl(dataUrl);
     stopCamera();
+    setStamping(true);
+
+    // Endereço precisa de internet; sem conexão, cai pro fallback de coordenada
+    // (definido dentro do drawStamp) sem travar o motorista.
+    let address = null;
+    if (coords) {
+      address = await reverseGeocode(coords.latitude, coords.longitude);
+    }
+
+    drawStamp(ctx, canvas.width, canvas.height, {
+      stageLabel: LABELS[status] || status,
+      driverName: driverInfo?.name,
+      plate: driverInfo?.plate,
+      plateReboque: driverInfo?.plateReboque,
+      address,
+      coords,
+    });
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    setStamping(false);
+    setPhotoDataUrl(dataUrl);
   }
 
   function retake() {
@@ -130,7 +276,12 @@ export default function DriverCamera() {
 
       navigate('/');
     } catch (e) {
-      setError('Erro ao salvar: ' + e.message);
+      const msg = String(e.message || '');
+      if (msg.includes('duplicate') || msg.includes('uq_trip_stage_once')) {
+        setError('Essa etapa já tinha sido registrada nesse meio tempo. Volte e confira.');
+      } else {
+        setError('Erro ao salvar: ' + msg);
+      }
     } finally {
       setSaving(false);
     }
@@ -143,9 +294,24 @@ export default function DriverCamera() {
         <h3>{LABELS[status] || status}</h3>
       </header>
 
-      {error && <p className="error-text">{error}</p>}
+      {checking && <p className="empty-state">Verificando...</p>}
 
-      {!photoDataUrl ? (
+      {blocked && (
+        <div className="no-trip-box">
+          <p>Essa etapa já foi registrada nessa viagem.</p>
+          <p className="subtitle">
+            Se foi engano, volte e use "Desfazer última etapa" — ou peça pro time administrativo excluir e liberar de novo.
+          </p>
+        </div>
+      )}
+
+      {!checking && !blocked && error && <p className="error-text">{error}</p>}
+
+      {!checking && !blocked && stamping && (
+        <p className="empty-state">Adicionando informações na foto...</p>
+      )}
+
+      {!checking && !blocked && !stamping && !photoDataUrl && (
         <>
           <div className="camera-viewport">
             <video ref={videoRef} autoPlay playsInline muted className="camera-preview" />
@@ -153,7 +319,9 @@ export default function DriverCamera() {
           </div>
           <button className="capture-button" onClick={capturePhoto}>Tirar Foto</button>
         </>
-      ) : (
+      )}
+
+      {!checking && !blocked && !stamping && photoDataUrl && (
         <>
           <img src={photoDataUrl} alt="Foto capturada" className="camera-preview" />
           <div className="confirm-actions">

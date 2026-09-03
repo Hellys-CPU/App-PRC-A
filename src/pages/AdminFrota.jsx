@@ -82,6 +82,9 @@ export default function AdminFrota() {
     <div className="admin-container">
       <AdminNav />
       <h1 className="page-title">Frota</h1>
+      <p className="subtitle" style={{ textAlign: 'left', marginBottom: 24 }}>
+        Veículos cadastrados, tipo (toco/3-4/VUC/carreta) e validade do CRLV.
+      </p>
 
       <form onSubmit={handleSubmit} className="motorista-form" style={{ marginBottom: 28 }}>
         <label>Tipo de veículo</label>

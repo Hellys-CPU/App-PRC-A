@@ -157,7 +157,7 @@ export default function AdminDashboard() {
     }
   }
 
-  function buildWhatsAppText(trip) {
+  async function buildWhatsAppText(trip) {
     const driverName = trip.drivers?.profiles?.full_name || 'Motorista';
     const plate = trip.drivers?.vehicle_plate || '-';
     const lines = [
@@ -169,30 +169,66 @@ export default function AdminDashboard() {
     if (trip.client_name) lines.push(`Cliente: ${trip.client_name}`);
     if (trip.cargo_description) lines.push(`Carga: ${trip.cargo_description}`);
     lines.push('');
-    (trip.trip_stages || []).forEach((stage) => {
+    const stages = [...(trip.trip_stages || [])].sort((a, b) => new Date(a.recorded_at) - new Date(b.recorded_at));
+    stages.forEach((stage) => {
       lines.push(`• ${STAGE_LABELS[stage.status] || stage.status} — ${formatTime(stage.recorded_at)}`);
     });
     lines.push('');
     const statusLabel = trip.status === 'in_progress' ? 'EM ANDAMENTO' : trip.status === 'completed' ? 'FINALIZADA' : 'ATRIBUÍDA';
     lines.push(`Status: ${statusLabel}`);
+
+    // Anexa o link da foto da etapa mais recente (WhatsApp não deixa mandar imagem
+    // de verdade por link direto, então mandamos o link clicável da foto).
+    const lastWithPhoto = [...stages].reverse().find((s) => s.photos?.[0]);
+    if (lastWithPhoto) {
+      const { data } = await supabase.storage
+        .from('trip-photos')
+        .createSignedUrl(lastWithPhoto.photos[0].storage_path, 3600);
+      if (data?.signedUrl) {
+        lines.push('');
+        lines.push(`📸 Foto mais recente (${STAGE_LABELS[lastWithPhoto.status] || lastWithPhoto.status}):`);
+        lines.push(data.signedUrl);
+      }
+    }
+
     return lines.join('\n');
   }
 
-  function sendToWhatsApp(trip) {
-    const text = buildWhatsAppText(trip);
+  async function sendToWhatsApp(trip) {
+    const text = await buildWhatsAppText(trip);
     const phone = trip.drivers?.profiles?.phone;
     const base = phone ? `https://wa.me/55${phone}` : 'https://wa.me/';
     window.open(`${base}?text=${encodeURIComponent(text)}`, '_blank');
   }
 
   async function copyToClipboard(trip) {
-    const text = buildWhatsAppText(trip);
+    const text = await buildWhatsAppText(trip);
     try {
       await navigator.clipboard.writeText(text);
       toast('Texto copiado! Já pode colar no WhatsApp.', 'success');
     } catch {
       toast('Não foi possível copiar automaticamente.', 'error');
     }
+  }
+
+  async function handleDeleteStage(stage, tripId) {
+    const confirmed = window.confirm(
+      `Excluir "${STAGE_LABELS[stage.status] || stage.status}"? O motorista vai poder registrar essa etapa de novo.`
+    );
+    if (!confirmed) return;
+
+    const photo = stage.photos?.[0];
+    if (photo?.storage_path) {
+      await supabase.storage.from('trip-photos').remove([photo.storage_path]);
+    }
+    const { error } = await supabase.from('trip_stages').delete().eq('id', stage.id);
+
+    if (error) {
+      toast('Erro ao excluir: ' + error.message, 'error');
+      return;
+    }
+    toast('Etapa excluída. O motorista já pode registrar de novo.', 'success');
+    loadData();
   }
 
   async function handleLogout() { await supabase.auth.signOut(); }
@@ -256,6 +292,12 @@ export default function AdminDashboard() {
                     {photo && photoUrls[photo.id] && (
                       <img src={photoUrls[photo.id]} alt="Registro" className="stage-photo" />
                     )}
+                    <button
+                      className="secondary-button stage-delete-btn"
+                      onClick={() => handleDeleteStage(stage, trip.id)}
+                    >
+                      🗑 Excluir e pedir nova foto
+                    </button>
                   </div>
                 );
               })}

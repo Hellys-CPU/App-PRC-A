@@ -12,13 +12,13 @@ import AdminRelatorios from './pages/AdminRelatorios.jsx';
 import AdminConfiguracoes from './pages/AdminConfiguracoes.jsx';
 import AdminFinanceiro from './pages/AdminFinanceiro.jsx';
 import AdminChat from './pages/AdminChat.jsx';
-import AdminAdmins from './pages/AdminAdmins.jsx';
 import AdminChangelog from './pages/AdminChangelog.jsx';
 import RequireRole from './components/RequireRole.jsx';
 import DriverChat from './pages/DriverChat.jsx';
 import DriverHome from './pages/DriverHome.jsx';
 import DriverCamera from './pages/DriverCamera.jsx';
 import DriverHistory from './pages/DriverHistory.jsx';
+import ClientDashboard from './pages/ClientDashboard.jsx';
 import InstallPrompt from './components/InstallPrompt.jsx';
 
 export default function App() {
@@ -45,7 +45,9 @@ export default function App() {
     const { data: adminRow } = await supabase.from('admin_users').select('id').eq('id', userId).maybeSingle();
     if (adminRow) { setRole('admin'); return; }
     const { data: driverRow } = await supabase.from('drivers').select('id').eq('id', userId).maybeSingle();
-    setRole(driverRow ? 'driver' : 'unknown');
+    if (driverRow) { setRole('driver'); return; }
+    const { data: clientRow } = await supabase.from('clients').select('id').eq('auth_user_id', userId).maybeSingle();
+    setRole(clientRow ? 'client' : 'unknown');
   }
 
   if (session === undefined) {
@@ -80,7 +82,7 @@ export default function App() {
           <Route path="/configuracoes" element={<RequireRole page="configuracoes"><AdminConfiguracoes /></RequireRole>} />
           <Route path="/financeiro" element={<RequireRole page="financeiro"><AdminFinanceiro /></RequireRole>} />
           <Route path="/chat" element={<RequireRole page="chat"><AdminChat /></RequireRole>} />
-          <Route path="/admins" element={<RequireRole page="admins"><AdminAdmins /></RequireRole>} />
+          <Route path="/admins" element={<Navigate to="/configuracoes" replace />} />
           <Route path="/changelog" element={<RequireRole page="changelog"><AdminChangelog /></RequireRole>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
@@ -98,6 +100,17 @@ export default function App() {
           <Route path="/historico" element={<DriverHistory />} />
           <Route path="/chat" element={<DriverChat />} />
           <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+        <InstallPrompt />
+      </>
+    );
+  }
+
+  if (role === 'client') {
+    return (
+      <>
+        <Routes>
+          <Route path="*" element={<ClientDashboard />} />
         </Routes>
         <InstallPrompt />
       </>

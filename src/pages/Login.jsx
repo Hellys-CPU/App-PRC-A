@@ -4,12 +4,14 @@ import ThemeToggle from '../components/ThemeToggle.jsx';
 import Brand from '../components/Brand.jsx';
 
 export default function Login() {
-  const [mode, setMode] = useState('cpf'); // 'cpf' (motorista) | 'email' (admin)
+  const [mode, setMode] = useState('cpf'); // 'cpf' (motorista) | 'admin' | 'client'
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
+
+  const modeIndex = { cpf: 0, admin: 1, client: 2 }[mode];
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -34,20 +36,27 @@ export default function Login() {
         <Brand subtitle="Transportadora" />
         <p className="subtitle">Central de Operações — acompanhamento de viagens</p>
 
-        <div className="mode-switch" data-active={mode}>
+        <div className="mode-switch mode-switch-3" style={{ '--active-index': modeIndex }}>
           <button
             type="button"
             className={mode === 'cpf' ? 'active' : ''}
             onClick={() => { setMode('cpf'); setIdentifier(''); setError(''); }}
           >
-            Sou Motorista
+            Motorista
           </button>
           <button
             type="button"
-            className={mode === 'email' ? 'active' : ''}
-            onClick={() => { setMode('email'); setIdentifier(''); setError(''); }}
+            className={mode === 'admin' ? 'active' : ''}
+            onClick={() => { setMode('admin'); setIdentifier(''); setError(''); }}
           >
-            Sou Administrador
+            Admin
+          </button>
+          <button
+            type="button"
+            className={mode === 'client' ? 'active' : ''}
+            onClick={() => { setMode('client'); setIdentifier(''); setError(''); }}
+          >
+            Cliente
           </button>
         </div>
 

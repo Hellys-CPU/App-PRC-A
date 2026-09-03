@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import ThemeToggle from '../components/ThemeToggle.jsx';
 import Brand from '../components/Brand.jsx';
+import { useToast } from '../components/Toast.jsx';
+import { sendOrQueuePing, flushPingQueue, pendingPingCount } from '../lib/pingQueue.js';
 
 const STATUSES = [
   { key: 'apresentacao_base_origem', label: 'Apresentação na Base Origem', color: '#4f80b8' },
@@ -12,16 +14,20 @@ const STATUSES = [
   { key: 'parada_eventual', label: 'Parada Eventual', color: '#b8492b' },
 ];
 
-import { sendOrQueuePing, flushPingQueue, pendingPingCount } from '../lib/pingQueue.js';
+// Etapas que só podem ser registradas uma vez por viagem (Parada Eventual pode repetir).
+const ONE_TIME_STATUSES = ['apresentacao_base_origem', 'saida_base_origem', 'chegada_base_destino', 'fim_descarga'];
 
 const PING_INTERVAL_MS = 3 * 60 * 1000; // a cada 3 minutos, enquanto o app estiver aberto
 
 export default function DriverHome() {
   const [lastTimes, setLastTimes] = useState({});
+  const [stages, setStages] = useState([]);
   const [profile, setProfile] = useState(null);
   const [trip, setTrip] = useState(null);
   const [loadingTrip, setLoadingTrip] = useState(true);
+  const [undoing, setUndoing] = useState(false);
   const navigate = useNavigate();
+  const toast = useToast();
 
   useEffect(() => {
     loadData();
@@ -29,6 +35,7 @@ export default function DriverHome() {
     const channel = supabase
       .channel('driver_trips_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'trips' }, () => loadData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'trip_stages' }, () => loadData())
       .subscribe();
 
     return () => supabase.removeChannel(channel);
@@ -90,7 +97,6 @@ export default function DriverHome() {
       .maybeSingle();
     setProfile(profileData);
 
-    // Busca a viagem atual do motorista: atribuída ou em andamento (a mais recente)
     const { data: tripData } = await supabase
       .from('trips')
       .select('id, origin, destination, status, created_at')
@@ -106,9 +112,11 @@ export default function DriverHome() {
     if (tripData) {
       const { data } = await supabase
         .from('trip_stages')
-        .select('status, recorded_at')
+        .select('id, status, recorded_at')
         .eq('trip_id', tripData.id)
         .order('recorded_at', { ascending: false });
+
+      setStages(data || []);
 
       const times = {};
       (data || []).forEach((row) => {
@@ -116,6 +124,7 @@ export default function DriverHome() {
       });
       setLastTimes(times);
     } else {
+      setStages([]);
       setLastTimes({});
     }
   }
@@ -128,6 +137,29 @@ export default function DriverHome() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
+  }
+
+  const doneStatuses = new Set(stages.filter((s) => ONE_TIME_STATUSES.includes(s.status)).map((s) => s.status));
+  const lastStage = stages[0]; // já vem ordenado do mais recente pro mais antigo
+
+  async function handleUndoLast() {
+    if (!lastStage) return;
+    setUndoing(true);
+
+    const { data: photoRows } = await supabase.from('photos').select('storage_path').eq('stage_id', lastStage.id);
+    if (photoRows?.length) {
+      await supabase.storage.from('trip-photos').remove(photoRows.map((p) => p.storage_path));
+    }
+    const { error } = await supabase.from('trip_stages').delete().eq('id', lastStage.id);
+
+    setUndoing(false);
+
+    if (error) {
+      toast('Não foi possível desfazer: ' + error.message, 'error');
+      return;
+    }
+    toast('Etapa desfeita. Pode registrar de novo.', 'success');
+    loadData();
   }
 
   return (
@@ -171,18 +203,28 @@ export default function DriverHome() {
           )}
 
           <div className="status-buttons">
-            {STATUSES.map((s) => (
-              <button
-                key={s.key}
-                className="status-button"
-                style={{ backgroundColor: s.color }}
-                onClick={() => navigate(`/camera/${s.key}`)}
-              >
-                <span className="status-label">{s.label}</span>
-                <span className="status-time">{formatTime(lastTimes[s.key])}</span>
-              </button>
-            ))}
+            {STATUSES.map((s) => {
+              const isDone = doneStatuses.has(s.key);
+              return (
+                <button
+                  key={s.key}
+                  className={`status-button${isDone ? ' status-done' : ''}`}
+                  style={{ backgroundColor: isDone ? undefined : s.color }}
+                  onClick={() => !isDone && navigate(`/camera/${s.key}`)}
+                  disabled={isDone}
+                >
+                  <span className="status-label">{isDone ? `✓ ${s.label}` : s.label}</span>
+                  <span className="status-time">{formatTime(lastTimes[s.key])}</span>
+                </button>
+              );
+            })}
           </div>
+
+          {lastStage && (
+            <button className="undo-link" onClick={handleUndoLast} disabled={undoing}>
+              {undoing ? 'Desfazendo...' : '↩ Desfazer última etapa registrada'}
+            </button>
+          )}
         </>
       )}
 

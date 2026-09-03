@@ -1,6 +1,54 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '2.3',
+    date: '03/09/2026',
+    items: [
+      '🔠 Tipografia trocada: Space Grotesk (títulos) + DM Sans (corpo), saindo das fontes genéricas.',
+      '✨ Cards do Painel e do Kanban entram em sequência (stagger), não tudo de uma vez.',
+      '🏙️ Textura sutil no fundo do app, bem discreta, pra tirar a sensação de tela chapada.',
+    ],
+  },
+
+  {
+    version: '2.2',
+    date: '03/09/2026',
+    items: [
+      '🗂️ Configurações e Admin viraram uma aba só, com sub-abas Rotas / Clientes / Logins.',
+      '🎨 Visual mais trabalhado nas telas de formulário e tabelas (Frota, Motoristas, etc.): destaque no topo, sombra, foco nos campos, listras nas tabelas.',
+    ],
+  },
+
+  {
+    version: '2.1',
+    date: '03/09/2026',
+    items: [
+      '👥 Login de cliente: em Configurações > Clientes, botão "Gerar Login" cria um acesso pro cliente acompanhar as próprias viagens (rota, status, fotos), sem ver nada de outros clientes.',
+      '🌫️ Carimbo da foto do motorista mais transparente, deixa a foto aparecer por baixo do texto.',
+      '🎨 Corrigido o botão de tema claro/escuro que aparecia com fundo branco destoando do resto da tela.',
+    ],
+  },
+
+  {
+    version: '2.0',
+    date: '03/09/2026',
+    items: [
+      '📍 Foto da etapa agora vem carimbada com nome do motorista, placa(s) do veículo, endereço (via OpenStreetMap) e data/hora — direto na imagem, igual apps de foto com localização.',
+    ],
+  },
+
+  {
+    version: '1.9',
+    date: '03/09/2026',
+    items: [
+      '🔒 Motorista não consegue mais registrar a mesma etapa duas vezes (Parada Eventual continua podendo repetir).',
+      '↩️ Motorista pode desfazer a última etapa registrada e refazer, se errou.',
+      '🗑️ Admin pode excluir uma etapa/foto e liberar pro motorista tirar de novo.',
+      '📸 Texto do WhatsApp agora inclui o link da foto da etapa mais recente.',
+    ],
+  },
+
+  {
     version: '1.8',
     date: '03/09/2026',
     items: [

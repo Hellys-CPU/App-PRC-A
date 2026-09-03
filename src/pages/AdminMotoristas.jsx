@@ -52,6 +52,9 @@ export default function AdminMotoristas() {
     <div className="admin-container">
       <AdminNav />
       <h1 className="page-title">Novo Motorista</h1>
+      <p className="subtitle" style={{ textAlign: 'left', marginBottom: 24 }}>
+        CPF vira o login, veículo vem da frota cadastrada e CNH fica com alerta de vencimento.
+      </p>
 
       {vehicles.length === 0 && (
         <p className="error-text">
