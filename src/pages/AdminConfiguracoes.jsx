@@ -38,7 +38,7 @@ function RotasPanel() {
   const [routes, setRoutes] = useState([]);
   const [form, setForm] = useState({
     code: '', origin: '', destination: '', defaultFreightValue: '', driverPayoutValue: '',
-    plannedApresentacaoTime: '', plannedSaidaAfterHours: '', plannedChegadaAfterHours: '',
+    plannedSaidaAfterHours: '', plannedChegadaAfterHours: '',
   });
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
@@ -71,7 +71,6 @@ function RotasPanel() {
       destination: form.destination,
       default_freight_value: form.defaultFreightValue ? Number(form.defaultFreightValue) : null,
       driver_payout_value: form.driverPayoutValue ? Number(form.driverPayoutValue) : null,
-      planned_apresentacao_time: form.plannedApresentacaoTime || null,
       planned_saida_after_hours: form.plannedSaidaAfterHours ? Number(form.plannedSaidaAfterHours) : null,
       planned_chegada_after_hours: form.plannedChegadaAfterHours ? Number(form.plannedChegadaAfterHours) : null,
     });
@@ -87,7 +86,7 @@ function RotasPanel() {
     setMessage({ type: 'success', text: 'Rota cadastrada!' });
     setForm({
       code: '', origin: '', destination: '', defaultFreightValue: '', driverPayoutValue: '',
-      plannedApresentacaoTime: '', plannedSaidaAfterHours: '', plannedChegadaAfterHours: '',
+      plannedSaidaAfterHours: '', plannedChegadaAfterHours: '',
     });
     loadRoutes();
   }
@@ -105,7 +104,6 @@ function RotasPanel() {
       destination: r.destination,
       defaultFreightValue: r.default_freight_value != null ? String(r.default_freight_value) : '',
       driverPayoutValue: r.driver_payout_value != null ? String(r.driver_payout_value) : '',
-      plannedApresentacaoTime: r.planned_apresentacao_time || '',
       plannedSaidaAfterHours: r.planned_saida_after_hours != null ? String(r.planned_saida_after_hours) : '',
       plannedChegadaAfterHours: r.planned_chegada_after_hours != null ? String(r.planned_chegada_after_hours) : '',
     });
@@ -123,7 +121,6 @@ function RotasPanel() {
       destination: editForm.destination,
       default_freight_value: editForm.defaultFreightValue ? Number(editForm.defaultFreightValue) : null,
       driver_payout_value: editForm.driverPayoutValue ? Number(editForm.driverPayoutValue) : null,
-      planned_apresentacao_time: editForm.plannedApresentacaoTime || null,
       planned_saida_after_hours: editForm.plannedSaidaAfterHours ? Number(editForm.plannedSaidaAfterHours) : null,
       planned_chegada_after_hours: editForm.plannedChegadaAfterHours ? Number(editForm.plannedChegadaAfterHours) : null,
     }).eq('id', id);
@@ -182,14 +179,7 @@ function RotasPanel() {
           automaticamente a conta a receber do cliente e a pagar ao motorista no Financeiro.
         </p>
 
-        <label>Horário planejado de apresentação</label>
-        <input
-          type="time"
-          value={form.plannedApresentacaoTime}
-          onChange={(e) => setForm({ ...form, plannedApresentacaoTime: e.target.value })}
-        />
-
-        <label>Horas até a saída planejada (depois da apresentação)</label>
+        <label>Horas até a saída planejada (depois da apresentação da viagem)</label>
         <input
           type="number"
           step="0.25"
@@ -209,8 +199,8 @@ function RotasPanel() {
           placeholder="Ex: 5 (ou 4.5 para 4h30)"
         />
         <p className="subtitle" style={{ textAlign: 'left', margin: '-8px 0 12px', fontSize: 12 }}>
-          Opcional. Preenchendo isso, toda viagem nessa rota mostra planejado x real
-          de Apresentação, Saída e Chegada no Painel.
+          Opcional. O horário de apresentação é definido em cada viagem (na criação) —
+          aqui só a duração até saída e chegada, que é fixa pra essa rota.
         </p>
 
         {message && (
@@ -225,7 +215,7 @@ function RotasPanel() {
       <h2>Rotas Cadastradas</h2>
       <table className="admin-table">
         <thead>
-          <tr><th>Código</th><th>Origem → Destino</th><th>Frete Cliente</th><th>Pagto. Motorista</th><th>Planejado</th><th>Status</th><th></th></tr>
+          <tr><th>Código</th><th>Origem → Destino</th><th>Frete Cliente</th><th>Pagto. Motorista</th><th>Duração Planejada</th><th>Status</th><th></th></tr>
         </thead>
         <tbody>
           {routes.map((r) => {
@@ -240,8 +230,7 @@ function RotasPanel() {
                   </td>
                   <td><input type="number" step="0.01" value={editForm.defaultFreightValue} onChange={(e) => setEditForm({ ...editForm, defaultFreightValue: e.target.value })} style={{ width: 100 }} /></td>
                   <td><input type="number" step="0.01" value={editForm.driverPayoutValue} onChange={(e) => setEditForm({ ...editForm, driverPayoutValue: e.target.value })} style={{ width: 100 }} /></td>
-                  <td style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 130 }}>
-                    <input type="time" value={editForm.plannedApresentacaoTime} onChange={(e) => setEditForm({ ...editForm, plannedApresentacaoTime: e.target.value })} title="Apresentação" />
+                  <td style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 110 }}>
                     <input type="number" step="0.25" placeholder="h até saída" value={editForm.plannedSaidaAfterHours} onChange={(e) => setEditForm({ ...editForm, plannedSaidaAfterHours: e.target.value })} title="Horas até a saída" />
                     <input type="number" step="0.25" placeholder="h até chegada" value={editForm.plannedChegadaAfterHours} onChange={(e) => setEditForm({ ...editForm, plannedChegadaAfterHours: e.target.value })} title="Horas até a chegada" />
                   </td>
@@ -262,8 +251,8 @@ function RotasPanel() {
                 <td>{r.default_freight_value != null ? Number(r.default_freight_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</td>
                 <td>{r.driver_payout_value != null ? Number(r.driver_payout_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</td>
                 <td style={{ fontSize: 11, color: 'var(--text-dim)' }}>
-                  {r.planned_apresentacao_time
-                    ? `Apres ${r.planned_apresentacao_time.slice(0, 5)} · +${r.planned_saida_after_hours ?? '?'}h saída · +${r.planned_chegada_after_hours ?? '?'}h cheg.`
+                  {r.planned_saida_after_hours != null || r.planned_chegada_after_hours != null
+                    ? `+${r.planned_saida_after_hours ?? '?'}h saída · +${r.planned_chegada_after_hours ?? '?'}h cheg. (após apresentação da viagem)`
                     : '-'}
                 </td>
                 <td>

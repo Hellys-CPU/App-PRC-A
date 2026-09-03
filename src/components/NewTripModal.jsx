@@ -8,7 +8,7 @@ export default function NewTripModal({ onClose, onCreated }) {
   const [clients, setClients] = useState([]);
   const [form, setForm] = useState({
     driverId: '', routeId: '', origin: '', destination: '',
-    clientId: '', cargoDescription: '', freightValue: '',
+    clientId: '', cargoDescription: '', freightValue: '', plannedApresentacaoAt: '',
   });
   const [saving, setSaving] = useState(false);
   const toast = useToast();
@@ -74,6 +74,7 @@ export default function NewTripModal({ onClose, onCreated }) {
       client_name: selectedClient ? selectedClient.name : null,
       cargo_description: form.cargoDescription || null,
       freight_value: form.freightValue ? Number(form.freightValue) : null,
+      planned_apresentacao_at: form.plannedApresentacaoAt ? new Date(form.plannedApresentacaoAt).toISOString() : null,
       status: 'assigned',
     });
 
@@ -141,6 +142,13 @@ export default function NewTripModal({ onClose, onCreated }) {
             value={form.freightValue}
             onChange={(e) => setForm({ ...form, freightValue: e.target.value })}
             placeholder="0,00"
+          />
+
+          <label>Horário planejado de apresentação (opcional)</label>
+          <input
+            type="datetime-local"
+            value={form.plannedApresentacaoAt}
+            onChange={(e) => setForm({ ...form, plannedApresentacaoAt: e.target.value })}
           />
 
           <div className="trip-actions" style={{ marginTop: 6 }}>

@@ -53,6 +53,7 @@ export default function AdminNovaViagem() {
           destination: r.destination,
           freightValue: r.default_freight_value,
           driverId: '',
+          plannedApresentacaoAt: '',
         });
       }
     });
@@ -65,6 +66,10 @@ export default function AdminNovaViagem() {
 
   function updateRowDriver(tempId, driverId) {
     setRows((prev) => prev.map((row) => (row.tempId === tempId ? { ...row, driverId } : row)));
+  }
+
+  function updateRowPlanned(tempId, value) {
+    setRows((prev) => prev.map((row) => (row.tempId === tempId ? { ...row, plannedApresentacaoAt: value } : row)));
   }
 
   function removeRow(tempId) {
@@ -115,6 +120,7 @@ export default function AdminNovaViagem() {
       cargo_description: cargoDescription || null,
       freight_value: r.freightValue,
       scheduled_date: scheduledDate || null,
+      planned_apresentacao_at: r.plannedApresentacaoAt ? new Date(r.plannedApresentacaoAt).toISOString() : null,
       status: 'assigned',
     }));
 
@@ -193,7 +199,7 @@ export default function AdminNovaViagem() {
 
           <table className="admin-table">
             <thead>
-              <tr><th>#</th><th>Rota</th><th>Motorista</th><th></th></tr>
+              <tr><th>#</th><th>Rota</th><th>Motorista</th><th>Apresentação Planejada</th><th></th></tr>
             </thead>
             <tbody>
               {rows.map((row, i) => (
@@ -207,6 +213,13 @@ export default function AdminNovaViagem() {
                         <option key={d.id} value={d.id}>{d.profiles?.full_name} — {d.vehicle_plate}</option>
                       ))}
                     </select>
+                  </td>
+                  <td>
+                    <input
+                      type="datetime-local"
+                      value={row.plannedApresentacaoAt}
+                      onChange={(e) => updateRowPlanned(row.tempId, e.target.value)}
+                    />
                   </td>
                   <td>
                     <button className="secondary-button" onClick={() => removeRow(row.tempId)}>Remover</button>

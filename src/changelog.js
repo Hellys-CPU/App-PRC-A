@@ -1,6 +1,25 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '2.7',
+    date: '03/09/2026',
+    items: [
+      '📊 Relatórios ganhou gráficos: faturamento por dia, viagens por status, e pontualidade planejado x real por etapa.',
+      '🏆 Ranking de pontualidade por motorista (% de apresentações no horário).',
+      '🐛 Corrigido input branco chapado nas edições dentro de tabela (rotas, veículos, etc.) — agora todo input/select do app segue o tema escuro por padrão.',
+    ],
+  },
+
+  {
+    version: '2.6',
+    date: '03/09/2026',
+    items: [
+      '🔧 Correção de modelo: horário de apresentação planejado agora é definido em CADA viagem (Nova Viagem ou Programação em Massa), não fixo na rota — a rota só guarda quantas horas até saída e chegada.',
+      '📅 Programação em Massa ganhou coluna de apresentação planejada por linha, já que viagens da mesma rota podem sair em horários diferentes.',
+    ],
+  },
+
+  {
     version: '2.5',
     date: '03/09/2026',
     items: [

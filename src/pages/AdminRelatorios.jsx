@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  PieChart, Pie, Cell,
+} from 'recharts';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -10,6 +13,11 @@ const STAGE_LABELS = {
   fim_descarga: 'Fim da Descarga',
   parada_eventual: 'Parada Eventual',
 };
+
+const COLOR_AMBER = '#f46101';
+const COLOR_ROUTE = '#2fae6f';
+const COLOR_ALERT = '#e0393f';
+const COLOR_ASSIGNED = '#4f80b8';
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -25,7 +33,6 @@ export default function AdminRelatorios() {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
-  const navigate = useNavigate();
 
   async function handleSearch(e) {
     e?.preventDefault();
@@ -39,7 +46,9 @@ export default function AdminRelatorios() {
       .from('trips')
       .select(`
         id, origin, destination, status, created_at, client_name, cargo_description, freight_value,
+        planned_apresentacao_at,
         drivers ( vehicle_plate, profiles ( full_name ) ),
+        routes ( planned_saida_after_hours, planned_chegada_after_hours ),
         trip_stages ( status, recorded_at )
       `)
       .gte('created_at', startDate.toISOString())
@@ -56,6 +65,75 @@ export default function AdminRelatorios() {
   function formatCurrency(v) {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
+
+  // Calcula planejado (apresentação/saída/chegada) igual ao Painel: apresentação
+  // vem da viagem, saída/chegada somam a duração cadastrada na rota.
+  function computePlanned(trip) {
+    if (!trip.planned_apresentacao_at) return null;
+    const apresentacao = new Date(trip.planned_apresentacao_at);
+    const saidaHours = Number(trip.routes?.planned_saida_after_hours) || 0;
+    const chegadaHours = Number(trip.routes?.planned_chegada_after_hours) || 0;
+    const saida = new Date(apresentacao.getTime() + saidaHours * 3600000);
+    const chegada = new Date(saida.getTime() + chegadaHours * 3600000);
+    return { apresentacao_base_origem: apresentacao, saida_base_origem: saida, chegada_base_destino: chegada };
+  }
+
+  // ---------- Dados dos gráficos ----------
+  const revenueByDay = useMemo(() => {
+    const map = {};
+    trips.forEach((t) => {
+      const day = new Date(t.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      map[day] = (map[day] || 0) + (Number(t.freight_value) || 0);
+    });
+    return Object.entries(map).map(([day, total]) => ({ day, total }));
+  }, [trips]);
+
+  const statusData = useMemo(() => {
+    const assigned = trips.filter((t) => t.status === 'assigned').length;
+    const inProgress = trips.filter((t) => t.status === 'in_progress').length;
+    const completed = trips.filter((t) => t.status === 'completed').length;
+    return [
+      { name: 'Atribuídas', value: assigned, color: COLOR_ASSIGNED },
+      { name: 'Em andamento', value: inProgress, color: COLOR_AMBER },
+      { name: 'Finalizadas', value: completed, color: COLOR_ROUTE },
+    ].filter((d) => d.value > 0);
+  }, [trips]);
+
+  const punctualityByStage = useMemo(() => {
+    const types = [
+      { key: 'apresentacao_base_origem', label: 'Apresentação' },
+      { key: 'saida_base_origem', label: 'Saída' },
+      { key: 'chegada_base_destino', label: 'Chegada' },
+    ];
+    return types.map(({ key, label }) => {
+      let onTime = 0, late = 0;
+      trips.forEach((t) => {
+        const planned = computePlanned(t);
+        if (!planned?.[key]) return;
+        const stage = (t.trip_stages || []).find((s) => s.status === key);
+        if (!stage) return;
+        if (new Date(stage.recorded_at) <= planned[key]) onTime++; else late++;
+      });
+      return { label, 'No horário': onTime, 'Atrasada': late };
+    }).filter((d) => d['No horário'] + d['Atrasada'] > 0);
+  }, [trips]);
+
+  const driverPunctuality = useMemo(() => {
+    const map = {};
+    trips.forEach((t) => {
+      const planned = computePlanned(t);
+      if (!planned?.apresentacao_base_origem) return;
+      const stage = (t.trip_stages || []).find((s) => s.status === 'apresentacao_base_origem');
+      if (!stage) return;
+      const name = t.drivers?.profiles?.full_name || 'Motorista';
+      if (!map[name]) map[name] = { name, onTime: 0, total: 0 };
+      map[name].total += 1;
+      if (new Date(stage.recorded_at) <= planned.apresentacao_base_origem) map[name].onTime += 1;
+    });
+    return Object.values(map)
+      .map((d) => ({ ...d, pct: Math.round((d.onTime / d.total) * 100) }))
+      .sort((a, b) => b.pct - a.pct);
+  }, [trips]);
 
   function exportCsv() {
     const headers = ['Data', 'Motorista', 'Placa', 'Cliente', 'Origem', 'Destino', 'Carga', 'Frete (R$)', 'Status', 'Última Etapa'];
@@ -96,6 +174,9 @@ export default function AdminRelatorios() {
     <div className="admin-container">
       <AdminNav />
       <h1 className="page-title">Relatórios</h1>
+      <p className="subtitle" style={{ textAlign: 'left', marginBottom: 20 }}>
+        Faturamento, status das viagens e pontualidade — comparando planejado x real.
+      </p>
 
       <form onSubmit={handleSearch} className="trips-toolbar" style={{ alignItems: 'flex-end' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -118,12 +199,93 @@ export default function AdminRelatorios() {
 
       {searched && !loading && (
         <>
-          <div className="cards" style={{ marginBottom: 20 }}>
+          <div className="cards" style={{ marginBottom: 24 }}>
             <div className="card"><h3>{trips.length}</h3><p>Viagens no Período</p></div>
             <div className="card"><h3>{completedCount}</h3><p>Finalizadas</p></div>
             <div className="card"><h3>{formatCurrency(totalFreight)}</h3><p>Faturamento (Frete)</p></div>
           </div>
 
+          {trips.length === 0 ? (
+            <p className="empty-state">Nenhuma viagem no período selecionado.</p>
+          ) : (
+            <>
+              <h2>Análise</h2>
+              <div className="report-charts-grid">
+                <div className="report-chart-card">
+                  <h3 className="report-chart-title">Faturamento por Dia</h3>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={revenueByDay}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+                      <XAxis dataKey="day" tick={{ fill: 'var(--text-dim)', fontSize: 11 }} />
+                      <YAxis tick={{ fill: 'var(--text-dim)', fontSize: 11 }} />
+                      <Tooltip
+                        contentStyle={{ background: 'var(--panel)', border: '1px solid var(--line)', fontSize: 12 }}
+                        formatter={(v) => formatCurrency(v)}
+                      />
+                      <Bar dataKey="total" fill={COLOR_AMBER} name="Frete" radius={[3, 3, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="report-chart-card">
+                  <h3 className="report-chart-title">Viagens por Status</h3>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={75} paddingAngle={2}>
+                        {statusData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--line)', fontSize: 12 }} />
+                      <Legend wrapperStyle={{ fontSize: 12, color: 'var(--text-dim)' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="report-chart-card report-chart-wide">
+                  <h3 className="report-chart-title">Pontualidade por Etapa (planejado x real)</h3>
+                  {punctualityByStage.length === 0 ? (
+                    <p className="empty-state">Nenhuma viagem no período tem horário planejado cadastrado ainda.</p>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={punctualityByStage}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+                        <XAxis dataKey="label" tick={{ fill: 'var(--text-dim)', fontSize: 11 }} />
+                        <YAxis tick={{ fill: 'var(--text-dim)', fontSize: 11 }} allowDecimals={false} />
+                        <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--line)', fontSize: 12 }} />
+                        <Legend wrapperStyle={{ fontSize: 12, color: 'var(--text-dim)' }} />
+                        <Bar dataKey="No horário" stackId="a" fill={COLOR_ROUTE} radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="Atrasada" stackId="a" fill={COLOR_ALERT} radius={[3, 3, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              </div>
+
+              {driverPunctuality.length > 0 && (
+                <>
+                  <h2>Pontualidade por Motorista (Apresentação)</h2>
+                  <table className="admin-table">
+                    <thead>
+                      <tr><th>Motorista</th><th>No horário</th><th>Total medido</th><th>% Pontualidade</th></tr>
+                    </thead>
+                    <tbody>
+                      {driverPunctuality.map((d) => (
+                        <tr key={d.name}>
+                          <td>{d.name}</td>
+                          <td>{d.onTime}</td>
+                          <td>{d.total}</td>
+                          <td style={{ color: d.pct >= 80 ? 'var(--route)' : d.pct >= 50 ? 'var(--amber)' : 'var(--alert)', fontWeight: 700 }}>
+                            {d.pct}%
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+            </>
+          )}
+
+          <h2>Viagens do Período</h2>
           <table className="admin-table">
             <thead>
               <tr>

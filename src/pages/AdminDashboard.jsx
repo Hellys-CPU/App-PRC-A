@@ -42,19 +42,15 @@ function tripColumn(trip) {
   return lastSequentialStage(trip) || 'apresentacao_base_origem';
 }
 
-// Calcula os horários planejados (Apresentação, Saída, Chegada) a partir do
-// cadastro da rota. Saída = apresentação + N horas. Chegada = saída + M horas.
+// Calcula os horários planejados (Apresentação, Saída, Chegada). A apresentação
+// vem da própria viagem (definida na criação); saída/chegada somam a duração da rota.
 function computePlannedTimes(trip) {
+  if (!trip.planned_apresentacao_at) return null;
   const route = trip.routes;
-  if (!route?.planned_apresentacao_time) return null;
 
-  const baseDateStr = (trip.scheduled_date || trip.created_at).slice(0, 10);
-  const [h, m] = route.planned_apresentacao_time.split(':').map(Number);
-  const apresentacao = new Date(`${baseDateStr}T00:00:00`);
-  apresentacao.setHours(h, m || 0, 0, 0);
-
-  const saidaHours = Number(route.planned_saida_after_hours) || 0;
-  const chegadaHours = Number(route.planned_chegada_after_hours) || 0;
+  const apresentacao = new Date(trip.planned_apresentacao_at);
+  const saidaHours = Number(route?.planned_saida_after_hours) || 0;
+  const chegadaHours = Number(route?.planned_chegada_after_hours) || 0;
   const saida = new Date(apresentacao.getTime() + saidaHours * 3600000);
   const chegada = new Date(saida.getTime() + chegadaHours * 3600000);
 
@@ -145,7 +141,7 @@ export default function AdminDashboard() {
     const { data: tripsData } = await supabase
       .from('trips')
       .select(`
-        id, origin, destination, status, created_at, scheduled_date, client_name, cargo_description, freight_value,
+        id, origin, destination, status, created_at, scheduled_date, planned_apresentacao_at, client_name, cargo_description, freight_value,
         drivers ( id, vehicle_plate, profiles ( full_name, phone ) ),
         routes ( planned_apresentacao_time, planned_saida_after_hours, planned_chegada_after_hours ),
         trip_stages ( id, status, recorded_at, latitude, longitude, photos ( id, storage_path ) )

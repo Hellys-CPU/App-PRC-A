@@ -65,7 +65,16 @@ h1, h2, h3, .brand-name, button, .status-label, .kanban-column-header span:first
 
 button { font-family: inherit; cursor: pointer; transition: transform 0.08s ease, background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease; }
 button:not(:disabled):active { transform: scale(0.96); }
-input, select { font-family: 'DM Sans', sans-serif; }
+input, select {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--ink);
+  color: var(--text-strong);
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  font-size: 13px;
+}
+input:focus, select:focus { outline: none; border-color: var(--amber); }
+input::placeholder { color: var(--text-dim); }
 
 ::selection { background: var(--amber); color: #14181d; }
 
@@ -1181,3 +1190,29 @@ h2 {
   opacity: 0.55;
 }
 .stage-row.stage-pending strong { color: var(--text-dim); }
+
+/* ---------- Gráficos de Relatórios ---------- */
+.report-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.report-chart-wide { grid-column: 1 / -1; }
+@media (max-width: 800px) { .report-charts-grid { grid-template-columns: 1fr; } }
+
+.report-chart-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--amber);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.report-chart-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
