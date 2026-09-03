@@ -1,6 +1,24 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '2.5',
+    date: '03/09/2026',
+    items: [
+      '⏰ Horário planejado por rota: Apresentação (horário fixo) + horas até a Saída + horas até a Chegada, cadastrado em Configurações > Rotas.',
+      '📋 No Painel, cada viagem expandida mostra planejado x real dessas três etapas — inclusive as que ainda não aconteceram, como lembrete do que falta.',
+    ],
+  },
+
+  {
+    version: '2.4',
+    date: '03/09/2026',
+    items: [
+      '👁️ Botão "Só hoje" no Painel: por padrão só mostra viagens finalizadas do dia (as ativas continuam sempre visíveis). Clique pra ver o histórico completo quando precisar.',
+      '🗃️ Tirado o fundo em caixa de cada coluna do Kanban — agora é só uma linha fina dividindo, com uma cor no topo de cada coluna (azul/laranja/verde conforme a etapa).',
+    ],
+  },
+
+  {
     version: '2.3',
     date: '03/09/2026',
     items: [

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import ThemeToggle from '../components/ThemeToggle.jsx';
@@ -21,11 +21,11 @@ const STAGE_LABELS = {
 const SEQUENTIAL_STAGES = ['apresentacao_base_origem', 'saida_base_origem', 'chegada_base_destino'];
 
 const COLUMNS = [
-  { key: 'assigned', title: 'Atribuídas' },
-  { key: 'apresentacao_base_origem', title: 'Apresentação na Origem' },
-  { key: 'saida_base_origem', title: 'Em Trânsito' },
-  { key: 'chegada_base_destino', title: 'Chegada no Destino' },
-  { key: 'completed', title: 'Finalizadas' },
+  { key: 'assigned', title: 'Atribuídas', color: 'var(--assigned)' },
+  { key: 'apresentacao_base_origem', title: 'Apresentação na Origem', color: 'var(--assigned)' },
+  { key: 'saida_base_origem', title: 'Em Trânsito', color: 'var(--amber)' },
+  { key: 'chegada_base_destino', title: 'Chegada no Destino', color: 'var(--amber)' },
+  { key: 'completed', title: 'Finalizadas', color: 'var(--route)' },
 ];
 
 // Retorna a etapa sequencial mais recente da viagem (ignorando parada_eventual).
@@ -41,6 +41,31 @@ function tripColumn(trip) {
   if (trip.status === 'completed') return 'completed';
   return lastSequentialStage(trip) || 'apresentacao_base_origem';
 }
+
+// Calcula os horários planejados (Apresentação, Saída, Chegada) a partir do
+// cadastro da rota. Saída = apresentação + N horas. Chegada = saída + M horas.
+function computePlannedTimes(trip) {
+  const route = trip.routes;
+  if (!route?.planned_apresentacao_time) return null;
+
+  const baseDateStr = (trip.scheduled_date || trip.created_at).slice(0, 10);
+  const [h, m] = route.planned_apresentacao_time.split(':').map(Number);
+  const apresentacao = new Date(`${baseDateStr}T00:00:00`);
+  apresentacao.setHours(h, m || 0, 0, 0);
+
+  const saidaHours = Number(route.planned_saida_after_hours) || 0;
+  const chegadaHours = Number(route.planned_chegada_after_hours) || 0;
+  const saida = new Date(apresentacao.getTime() + saidaHours * 3600000);
+  const chegada = new Date(saida.getTime() + chegadaHours * 3600000);
+
+  return {
+    apresentacao_base_origem: apresentacao,
+    saida_base_origem: saida,
+    chegada_base_destino: chegada,
+  };
+}
+
+const PLANNED_STAGE_TYPES = ['apresentacao_base_origem', 'saida_base_origem', 'chegada_base_destino'];
 
 // Acima disso, uma viagem em andamento sem nova etapa é sinalizada como atrasada.
 const LATE_THRESHOLD_MINUTES = 120;
@@ -72,6 +97,8 @@ export default function AdminDashboard() {
   const [photoUrls, setPhotoUrls] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [showHistory, setShowHistory] = useState(false);
+  const showHistoryRef = useRef(false);
   const [isLive, setIsLive] = useState(false);
   const [, forceTick] = useState(0);
   const navigate = useNavigate();
@@ -88,6 +115,11 @@ export default function AdminDashboard() {
       .subscribe((status) => setIsLive(status === 'SUBSCRIBED'));
     return () => supabase.removeChannel(channel);
   }, []);
+
+  useEffect(() => {
+    showHistoryRef.current = showHistory;
+    loadData();
+  }, [showHistory]);
 
   // Faz os "parada Xh Ym" dos cards andarem sozinhos, sem esperar um evento novo do banco.
   useEffect(() => {
@@ -113,11 +145,16 @@ export default function AdminDashboard() {
     const { data: tripsData } = await supabase
       .from('trips')
       .select(`
-        id, origin, destination, status, created_at, client_name, cargo_description, freight_value,
+        id, origin, destination, status, created_at, scheduled_date, client_name, cargo_description, freight_value,
         drivers ( id, vehicle_plate, profiles ( full_name, phone ) ),
+        routes ( planned_apresentacao_time, planned_saida_after_hours, planned_chegada_after_hours ),
         trip_stages ( id, status, recorded_at, latitude, longitude, photos ( id, storage_path ) )
       `)
-      .or(`status.eq.in_progress,status.eq.assigned,created_at.gte.${todayStart.toISOString()}`)
+      .or(
+        showHistoryRef.current
+          ? 'status.eq.in_progress,status.eq.assigned,status.eq.completed'
+          : `status.eq.in_progress,status.eq.assigned,created_at.gte.${todayStart.toISOString()}`
+      )
       .order('created_at', { ascending: false });
 
     const sorted = (tripsData || []).map((t) => ({
@@ -251,6 +288,7 @@ export default function AdminDashboard() {
     const isExpanded = expandedTrip === trip.id;
     const late = isLate(trip);
     const elapsedMins = minutesSince(lastStage ? lastStage.recorded_at : trip.created_at);
+    const plannedTimes = computePlannedTimes(trip);
 
     return (
       <div key={trip.id} className={`kanban-card status-${trip.status}${late ? ' is-late' : ''}`}>
@@ -283,11 +321,20 @@ export default function AdminDashboard() {
               {stages.length === 0 && <p className="empty-state">Nenhuma etapa registrada.</p>}
               {stages.map((stage) => {
                 const photo = stage.photos?.[0];
+                const planned = plannedTimes?.[stage.status];
+                const isLateVsPlanned = planned && new Date(stage.recorded_at) > planned;
                 return (
                   <div key={stage.id} className="stage-row">
                     <div className="stage-info">
                       <strong>{STAGE_LABELS[stage.status] || stage.status}</strong>
-                      <span>{formatTime(stage.recorded_at)}</span>
+                      <span>
+                        {formatTime(stage.recorded_at)}
+                        {planned && (
+                          <span className={`planned-tag${isLateVsPlanned ? ' late' : ''}`}>
+                            planejado {planned.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </span>
                     </div>
                     {photo && photoUrls[photo.id] && (
                       <img src={photoUrls[photo.id]} alt="Registro" className="stage-photo" />
@@ -301,6 +348,18 @@ export default function AdminDashboard() {
                   </div>
                 );
               })}
+              {plannedTimes && trip.status !== 'completed' && PLANNED_STAGE_TYPES
+                .filter((type) => !stages.some((s) => s.status === type))
+                .map((type) => (
+                  <div key={type} className="stage-row stage-pending">
+                    <div className="stage-info">
+                      <strong>{STAGE_LABELS[type]}</strong>
+                      <span className="planned-tag">
+                        planejado {plannedTimes[type].toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
             </div>
             <div className="trip-actions">
               <button className="secondary-button" onClick={() => copyToClipboard(trip)}>Copiar texto</button>
@@ -347,6 +406,13 @@ export default function AdminDashboard() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <button
+              className={`secondary-button${showHistory ? ' filter-active' : ''}`}
+              onClick={() => setShowHistory((v) => !v)}
+              title="Por padrão só mostra finalizadas de hoje"
+            >
+              {showHistory ? '✓ Vendo tudo' : 'Só hoje'}
+            </button>
           </div>
 
           <div className="kanban-board">
@@ -354,7 +420,7 @@ export default function AdminDashboard() {
               const colTrips = filteredTrips.filter((t) => tripColumn(t) === col.key);
               return (
                 <div key={col.key} className="kanban-column">
-                  <div className="kanban-column-header">
+                  <div className="kanban-column-header" style={{ borderTopColor: col.color }}>
                     <span>{col.title}</span>
                     <span className="kanban-count">{colTrips.length}</span>
                   </div>

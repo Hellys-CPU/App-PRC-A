@@ -353,6 +353,7 @@ h2 {
   font-size: 14px;
 }
 .trips-toolbar input:focus { outline: none; border-color: var(--amber); }
+.trips-toolbar .filter-active { border-color: var(--amber); color: var(--amber); }
 
 /* ---------- Kanban ---------- */
 .kanban-board {
@@ -364,8 +365,8 @@ h2 {
 }
 
 .kanban-column {
-  background: var(--panel);
-  padding: 0 0 10px;
+  background: transparent;
+  padding: 0 14px 10px 0;
   min-height: 120px;
   min-width: 250px;
   flex: 1 1 250px;
@@ -373,7 +374,8 @@ h2 {
   flex-direction: column;
   gap: 8px;
 }
-@media (max-width: 700px) { .kanban-column { min-width: 84vw; } }
+.kanban-column:not(:last-child) { border-right: 1px solid var(--line); }
+@media (max-width: 700px) { .kanban-column { min-width: 84vw; border-right: none !important; } }
 
 .kanban-column-header {
   display: flex;
@@ -1166,3 +1168,16 @@ h2 {
 .kanban-column-body .kanban-card:nth-child(4) { animation-delay: 0.20s; }
 .kanban-column-body .kanban-card:nth-child(5) { animation-delay: 0.26s; }
 .kanban-column-body .kanban-card:nth-child(n+6) { animation-delay: 0.30s; }
+
+/* ---------- Planejado x Real (etapas) ---------- */
+.planned-tag {
+  display: block;
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.planned-tag.late { color: var(--alert); font-weight: 700; }
+.stage-row.stage-pending {
+  opacity: 0.55;
+}
+.stage-row.stage-pending strong { color: var(--text-dim); }
