@@ -138,12 +138,12 @@ export default function AdminDashboard() {
     const { count: todayStages } = await supabase
       .from('trip_stages').select('*', { count: 'exact', head: true }).gte('recorded_at', todayStart.toISOString());
 
-    const { data: tripsData } = await supabase
+    const { data: tripsData, error: tripsError } = await supabase
       .from('trips')
       .select(`
         id, origin, destination, status, created_at, scheduled_date, planned_apresentacao_at, client_name, cargo_description, freight_value,
         drivers ( id, vehicle_plate, profiles ( full_name, phone ) ),
-        routes ( planned_apresentacao_time, planned_saida_after_hours, planned_chegada_after_hours ),
+        routes ( planned_saida_after_hours, planned_chegada_after_hours ),
         trip_stages ( id, status, recorded_at, latitude, longitude, photos ( id, storage_path ) )
       `)
       .or(
@@ -152,6 +152,11 @@ export default function AdminDashboard() {
           : `status.eq.in_progress,status.eq.assigned,created_at.gte.${todayStart.toISOString()}`
       )
       .order('created_at', { ascending: false });
+
+    if (tripsError) {
+      console.error('Erro ao carregar viagens:', tripsError);
+      toast('Erro ao carregar viagens: ' + tripsError.message, 'error');
+    }
 
     const sorted = (tripsData || []).map((t) => ({
       ...t,

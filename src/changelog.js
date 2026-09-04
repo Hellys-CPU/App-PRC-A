@@ -1,6 +1,15 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '2.8',
+    date: '03/09/2026',
+    items: [
+      '🐛 Corrigido bug sério: o Painel pedia pro banco uma coluna que não existia mais (sobrou de um ajuste anterior), e isso fazia a consulta de viagens falhar em silêncio — parecia que às viagens tinham sumido, mas continuavam no banco o tempo todo.',
+      '🛡️ Agora erro de consulta no Painel aparece num aviso na tela, em vez de falhar quieto.',
+    ],
+  },
+
+  {
     version: '2.7',
     date: '03/09/2026',
     items: [
