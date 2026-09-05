@@ -1,6 +1,22 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '3.0',
+    date: '04/09/2026',
+    items: [
+      '📱 Bolha flutuante nas telas com tabela (Motoristas, Frota, Rotas, Clientes, Logins, Financeiro, Relatórios) — só aparece no celular, toca e abre a tabela num painel por cima da tela, sem precisar mais ficar rolando de lado.',
+    ],
+  },
+
+  {
+    version: '2.9',
+    date: '04/09/2026',
+    items: [
+      '📱 Correções de visual pro Painel Admin no celular: cards de estatística empilham certinho, tabelas não vazam mais pra fora da tela (rolam por dentro delas mesmas), e a página não desliza mais pro lado inteira.',
+    ],
+  },
+
+  {
     version: '2.8',
     date: '03/09/2026',
     items: [

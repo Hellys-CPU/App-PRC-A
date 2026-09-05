@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
+import MobileTableReveal from '../components/MobileTableReveal.jsx';
 import { useToast } from '../components/Toast.jsx';
 
 function formatCurrency(v) {
@@ -138,7 +139,8 @@ export default function AdminFinanceiro() {
 
       {loading && <p className="empty-state">Carregando...</p>}
 
-      <table className="admin-table">
+      <MobileTableReveal title="Lançamentos">
+        <table className="admin-table">
         <thead>
           <tr>
             <th>Viagem</th>
@@ -181,7 +183,8 @@ export default function AdminFinanceiro() {
             <tr><td colSpan="7" className="empty-state">Nenhum lançamento ainda.</td></tr>
           )}
         </tbody>
-      </table>
+        </table>
+      </MobileTableReveal>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
+import MobileTableReveal from '../components/MobileTableReveal.jsx';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell,
@@ -263,6 +264,7 @@ export default function AdminRelatorios() {
               {driverPunctuality.length > 0 && (
                 <>
                   <h2>Pontualidade por Motorista (Apresentação)</h2>
+                  <MobileTableReveal title="Pontualidade por Motorista">
                   <table className="admin-table">
                     <thead>
                       <tr><th>Motorista</th><th>No horário</th><th>Total medido</th><th>% Pontualidade</th></tr>
@@ -280,12 +282,14 @@ export default function AdminRelatorios() {
                       ))}
                     </tbody>
                   </table>
+                  </MobileTableReveal>
                 </>
               )}
             </>
           )}
 
           <h2>Viagens do Período</h2>
+          <MobileTableReveal title="Viagens do Período" offset={70}>
           <table className="admin-table">
             <thead>
               <tr>
@@ -308,6 +312,7 @@ export default function AdminRelatorios() {
               )}
             </tbody>
           </table>
+          </MobileTableReveal>
         </>
       )}
     </div>

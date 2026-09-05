@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
+import MobileTableReveal from '../components/MobileTableReveal.jsx';
 import { useToast } from '../components/Toast.jsx';
 
 const VEHICLE_TYPES = [
@@ -125,7 +126,8 @@ export default function AdminFrota() {
       </form>
 
       <h2>Veículos Cadastrados</h2>
-      <table className="admin-table">
+      <MobileTableReveal title="Frota" icon="🚚">
+        <table className="admin-table">
         <thead>
           <tr><th>Tipo</th><th>Placa(s)</th><th>Modelo</th><th>Ano</th><th>CRLV</th><th>Status</th><th></th></tr>
         </thead>
@@ -161,7 +163,8 @@ export default function AdminFrota() {
             <tr><td colSpan="7" className="empty-state">Nenhum veículo cadastrado.</td></tr>
           )}
         </tbody>
-      </table>
+        </table>
+      </MobileTableReveal>
 
       {editingId && (
         <EditVehiclePanel

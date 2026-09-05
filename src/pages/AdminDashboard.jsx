@@ -5,6 +5,7 @@ import ThemeToggle from '../components/ThemeToggle.jsx';
 import Brand from '../components/Brand.jsx';
 import { useToast } from '../components/Toast.jsx';
 import AdminNav from '../components/AdminNav.jsx';
+import MobileTableReveal from '../components/MobileTableReveal.jsx';
 import { useAdminRole, pageAllowed } from '../hooks/useAdminRole.js';
 import NewTripModal from '../components/NewTripModal.jsx';
 
@@ -437,7 +438,8 @@ export default function AdminDashboard() {
       )}
 
       <h2>Motoristas</h2>
-      <table className="admin-table">
+      <MobileTableReveal title="Motoristas" icon="🧑‍✈️">
+        <table className="admin-table">
         <thead>
           <tr><th>Nome</th><th>Placa</th><th>Telefone</th><th>CNH</th><th>Contato</th></tr>
         </thead>
@@ -466,7 +468,8 @@ export default function AdminDashboard() {
             <tr><td colSpan="5" className="empty-state">Nenhum motorista cadastrado ainda.</td></tr>
           )}
         </tbody>
-      </table>
+        </table>
+      </MobileTableReveal>
 
       {showNewTrip && (
         <NewTripModal

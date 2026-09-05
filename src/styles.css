@@ -57,7 +57,9 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  overflow-x: hidden;
 }
+html { overflow-x: hidden; }
 
 h1, h2, h3, .brand-name, button, .status-label, .kanban-column-header span:first-child {
   font-family: 'Space Grotesk', 'DM Sans', sans-serif;
@@ -334,6 +336,11 @@ h2 {
   margin-bottom: 24px;
   border: 1px solid var(--line);
 }
+@media (max-width: 640px) {
+  .cards { flex-direction: column; }
+  .card { border-right: none !important; border-bottom: 1px solid var(--line); }
+  .card:last-child { border-bottom: none; }
+}
 .card {
   padding: 14px 22px;
   border-right: 1px solid var(--line);
@@ -508,6 +515,10 @@ h2 {
   border: 1px solid var(--line);
   border-top: 3px solid var(--line);
   box-shadow: var(--shadow);
+}
+@media (max-width: 700px) {
+  .admin-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .admin-table thead, .admin-table tbody, .admin-table tr { display: table; width: 100%; table-layout: auto; }
 }
 .admin-table th, .admin-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--line); font-size: 13px; }
 .admin-table th { color: var(--text-dim); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
@@ -1215,4 +1226,51 @@ h2 {
   margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+}
+
+/* ---------- Bolha flutuante pra tabelas (só no celular) ---------- */
+.mobile-table-fab { display: none; }
+
+@media (max-width: 700px) {
+  .table-desktop-only { display: none; }
+
+  .mobile-table-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: 18px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--amber);
+    color: #14181d;
+    border: none;
+    font-size: 22px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.45);
+    z-index: 500;
+    cursor: pointer;
+    animation: pulseBubble 2.4s ease-in-out infinite;
+  }
+  .mobile-table-fab:active { animation: none; transform: scale(0.92); }
+
+  @keyframes pulseBubble {
+    0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,0.45), 0 0 0 0 rgba(244,97,1,0.4); }
+    50% { box-shadow: 0 4px 16px rgba(0,0,0,0.45), 0 0 0 9px rgba(244,97,1,0); }
+  }
+
+  .mobile-table-backdrop { align-items: flex-end; padding: 0; }
+  .mobile-table-sheet {
+    width: 100%;
+    max-width: 100%;
+    max-height: 85vh;
+    border-radius: 0;
+    animation: slideUpSheet 0.22s ease;
+  }
+  @keyframes slideUpSheet {
+    from { transform: translateY(24px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .mobile-table-sheet-body { overflow-y: auto; max-height: 68vh; }
+  .mobile-table-sheet-body .admin-table { box-shadow: none; }
 }

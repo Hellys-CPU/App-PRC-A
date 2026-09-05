@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
+import MobileTableReveal from '../components/MobileTableReveal.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { ROLE_LABELS, ROLE_PERMISSIONS, ALL_PAGES, JOB_TITLES } from '../hooks/useAdminRole.js';
 
@@ -213,7 +214,8 @@ function RotasPanel() {
       </form>
 
       <h2>Rotas Cadastradas</h2>
-      <table className="admin-table">
+      <MobileTableReveal title="Rotas" icon="🛣️">
+        <table className="admin-table">
         <thead>
           <tr><th>Código</th><th>Origem → Destino</th><th>Frete Cliente</th><th>Pagto. Motorista</th><th>Duração Planejada</th><th>Status</th><th></th></tr>
         </thead>
@@ -270,7 +272,8 @@ function RotasPanel() {
             <tr><td colSpan="7" className="empty-state">Nenhuma rota cadastrada.</td></tr>
           )}
         </tbody>
-      </table>
+        </table>
+      </MobileTableReveal>
     </>
   );
 }
@@ -398,7 +401,8 @@ function ClientesPanel() {
       </form>
 
       <h2>Clientes Cadastrados</h2>
-      <table className="admin-table">
+      <MobileTableReveal title="Clientes" icon="🏢">
+        <table className="admin-table">
         <thead>
           <tr><th>Nome</th><th>Telefone</th><th>Status</th><th>Login</th><th></th></tr>
         </thead>
@@ -449,7 +453,8 @@ function ClientesPanel() {
             <tr><td colSpan="5" className="empty-state">Nenhum cliente cadastrado.</td></tr>
           )}
         </tbody>
-      </table>
+        </table>
+      </MobileTableReveal>
 
       {loginForClientId && (
         <div className="motorista-form" style={{ marginTop: 20, maxWidth: 420 }}>
@@ -559,7 +564,8 @@ function LoginsPanel() {
       </form>
 
       <h2>Logins Cadastrados</h2>
-      <table className="admin-table">
+      <MobileTableReveal title="Logins" icon="🔑">
+        <table className="admin-table">
         <thead>
           <tr><th>Nome</th><th>Cargo</th><th>Nível de Acesso</th><th>Permissões</th><th></th></tr>
         </thead>
@@ -580,7 +586,8 @@ function LoginsPanel() {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </MobileTableReveal>
 
       {editingId && (
         <EditAdminPanel
