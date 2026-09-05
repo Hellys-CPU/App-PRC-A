@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabase';
 import Brand from '../components/Brand.jsx';
 import ThemeToggle from '../components/ThemeToggle.jsx';
+import PhotoLightbox from '../components/PhotoLightbox.jsx';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -25,6 +26,7 @@ export default function ClientDashboard() {
   const [loading, setLoading] = useState(true);
   const [expandedTrip, setExpandedTrip] = useState(null);
   const [photoUrls, setPhotoUrls] = useState({});
+  const [lightboxSrc, setLightboxSrc] = useState(null);
 
   useEffect(() => {
     loadTrips();
@@ -133,7 +135,12 @@ export default function ClientDashboard() {
                             <span>{formatTime(stage.recorded_at)}</span>
                           </div>
                           {photo && photoUrls[photo.id] && (
-                            <img src={photoUrls[photo.id]} alt="Registro" className="stage-photo" />
+                            <img
+                              src={photoUrls[photo.id]}
+                              alt="Registro"
+                              className="stage-photo"
+                              onClick={() => setLightboxSrc(photoUrls[photo.id])}
+                            />
                           )}
                         </div>
                       );
@@ -145,6 +152,8 @@ export default function ClientDashboard() {
           );
         })}
       </div>
+
+      <PhotoLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
   );
 }

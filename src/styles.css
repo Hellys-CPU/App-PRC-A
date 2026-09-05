@@ -502,7 +502,15 @@ h2 {
 .stage-info { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .stage-info strong { color: var(--text); font-size: 13px; }
 .stage-info span { color: var(--text-dim); font-size: 12px; white-space: nowrap; font-family: 'DM Sans', sans-serif; }
-.stage-photo { width: 100%; max-width: 220px; object-fit: cover; max-height: 160px; }
+.stage-photo {
+  width: 100%;
+  max-width: 220px;
+  object-fit: contain;
+  max-height: 220px;
+  background: var(--ink);
+  cursor: pointer;
+  border: 1px solid var(--line);
+}
 
 .trip-actions { display: flex; gap: 8px; margin-top: 14px; }
 .trip-actions button { flex: 1; padding: 11px; font-size: 12px; }
@@ -605,7 +613,16 @@ h2 {
 }
 
 /* ---------- Histórico ---------- */
-.history-item { background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--amber); padding: 14px 16px; margin-bottom: 10px; }
+.history-item {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--amber);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
 .history-status { color: var(--text-strong); font-weight: 700; font-size: 14px; }
 .history-time { color: var(--text-dim); font-size: 12px; margin-top: 2px; }
 
@@ -1273,4 +1290,131 @@ h2 {
   }
   .mobile-table-sheet-body { overflow-y: auto; max-height: 68vh; }
   .mobile-table-sheet-body .admin-table { box-shadow: none; }
+}
+
+/* ---------- Escolher foto da galeria ---------- */
+.gallery-button {
+  margin-top: 10px;
+  width: 100%;
+  padding: 13px;
+}
+
+/* ---------- Miniatura do histórico do motorista (também faltava CSS) ---------- */
+.history-thumb {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  background: var(--ink);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ---------- Lightbox (foto ampliada) ---------- */
+.photo-lightbox-backdrop {
+  background: rgba(0,0,0,0.85);
+  flex-direction: column;
+  padding: 30px 16px;
+}
+.photo-lightbox-img {
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  cursor: default;
+}
+.photo-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0,0,0,0.5);
+  color: #fff;
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+}
+
+/* ---------- Menu de navegação rápida (só no celular) ---------- */
+.mobile-nav-fab { display: none; }
+
+@media (max-width: 700px) {
+  .admin-nav-tabs { display: none; }
+
+  .mobile-nav-fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    left: 18px;
+    bottom: 20px;
+    width: 52px;
+    height: 52px;
+    background: var(--panel-raised);
+    border: 2px solid var(--amber);
+    z-index: 500;
+    cursor: pointer;
+  }
+  .mobile-nav-fab-bars,
+  .mobile-nav-fab-bars::before,
+  .mobile-nav-fab-bars::after {
+    content: '';
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--amber);
+  }
+  .mobile-nav-fab-bars { position: relative; }
+  .mobile-nav-fab-bars::before { position: absolute; top: -6px; left: 0; }
+  .mobile-nav-fab-bars::after { position: absolute; top: 6px; left: 0; width: 13px; }
+
+  .mobile-nav-backdrop { align-items: flex-end; padding: 0; }
+  .mobile-nav-sheet {
+    width: 100%;
+    max-height: 80vh;
+    background: var(--panel);
+    border-top: 3px solid var(--amber);
+    box-shadow: var(--shadow);
+    animation: slideUpSheet 0.22s ease;
+    overflow-y: auto;
+  }
+  .mobile-nav-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--line);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .mobile-nav-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 16px;
+  }
+  .mobile-nav-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--line);
+    padding: 16px 6px;
+    color: var(--text);
+    font-size: 11px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .mobile-nav-tile-icon { font-size: 24px; }
+  .mobile-nav-tile:nth-child(3n+1) { border-top-color: var(--assigned); }
+  .mobile-nav-tile:nth-child(3n+2) { border-top-color: var(--amber); }
+  .mobile-nav-tile:nth-child(3n+3) { border-top-color: var(--route); }
+  .mobile-nav-tile.active { border-top-color: var(--alert) !important; background: var(--panel); }
 }

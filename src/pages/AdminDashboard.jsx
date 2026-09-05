@@ -8,6 +8,7 @@ import AdminNav from '../components/AdminNav.jsx';
 import MobileTableReveal from '../components/MobileTableReveal.jsx';
 import { useAdminRole, pageAllowed } from '../hooks/useAdminRole.js';
 import NewTripModal from '../components/NewTripModal.jsx';
+import PhotoLightbox from '../components/PhotoLightbox.jsx';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -101,6 +102,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { permissions } = useAdminRole();
   const [showNewTrip, setShowNewTrip] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
   const toast = useToast();
 
   useEffect(() => {
@@ -339,7 +341,12 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                     {photo && photoUrls[photo.id] && (
-                      <img src={photoUrls[photo.id]} alt="Registro" className="stage-photo" />
+                      <img
+                        src={photoUrls[photo.id]}
+                        alt="Registro"
+                        className="stage-photo"
+                        onClick={() => setLightboxSrc(photoUrls[photo.id])}
+                      />
                     )}
                     <button
                       className="secondary-button stage-delete-btn"
@@ -477,6 +484,8 @@ export default function AdminDashboard() {
           onCreated={loadData}
         />
       )}
+
+      <PhotoLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
   );
 }

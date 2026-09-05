@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
+import PhotoLightbox from '../components/PhotoLightbox.jsx';
 
 const LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -12,6 +13,7 @@ const LABELS = {
 
 export default function DriverHistory() {
   const [stages, setStages] = useState([]);
+  const [lightboxSrc, setLightboxSrc] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,7 +54,14 @@ export default function DriverHistory() {
       <div className="history-list">
         {stages.map((s) => (
           <div key={s.id} className="history-item">
-            {s.photoUrl && <img src={s.photoUrl} alt="" className="history-thumb" />}
+            {s.photoUrl && (
+              <img
+                src={s.photoUrl}
+                alt=""
+                className="history-thumb"
+                onClick={() => setLightboxSrc(s.photoUrl)}
+              />
+            )}
             <div>
               <p className="history-status">{LABELS[s.status] || s.status}</p>
               <p className="history-time">{new Date(s.recorded_at).toLocaleString('pt-BR')}</p>
@@ -60,6 +69,8 @@ export default function DriverHistory() {
           </div>
         ))}
       </div>
+
+      <PhotoLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
   );
 }

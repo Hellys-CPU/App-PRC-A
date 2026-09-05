@@ -80,6 +80,7 @@ export default function DriverCamera() {
   const [checking, setChecking] = useState(true);
   const [stamping, setStamping] = useState(false);
   const [driverInfo, setDriverInfo] = useState(null);
+  const galleryInputRef = useRef(null);
 
   useEffect(() => {
     checkAlreadyDone();
@@ -178,17 +179,9 @@ export default function DriverCamera() {
     );
   }
 
-  async function capturePhoto() {
-    const video = videoRef.current;
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-
-    setFlash(true);
-    setTimeout(() => setFlash(false), 350);
-    stopCamera();
+  // Carimba um canvas já desenhado (seja da câmera ao vivo, seja de uma foto
+  // escolhida da galeria) com nome/placa/endereço/hora, e finaliza a foto.
+  async function stampCanvasAndFinish(canvas, ctx) {
     setStamping(true);
 
     // Endereço precisa de internet; sem conexão, cai pro fallback de coordenada
@@ -207,9 +200,48 @@ export default function DriverCamera() {
       coords,
     });
 
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
     setStamping(false);
     setPhotoDataUrl(dataUrl);
+  }
+
+  async function capturePhoto() {
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+
+    setFlash(true);
+    setTimeout(() => setFlash(false), 350);
+    stopCamera();
+
+    await stampCanvasAndFinish(canvas, ctx);
+  }
+
+  function handleGalleryFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permite escolher o mesmo arquivo de novo depois
+    if (!file) return;
+
+    stopCamera();
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = async () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(objectUrl);
+      await stampCanvasAndFinish(canvas, ctx);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      setError('Não foi possível abrir essa imagem. Tente outra foto.');
+    };
+    img.src = objectUrl;
   }
 
   function retake() {
@@ -318,6 +350,19 @@ export default function DriverCamera() {
             <div className={`camera-flash${flash ? ' active' : ''}`} />
           </div>
           <button className="capture-button" onClick={capturePhoto}>Tirar Foto</button>
+          <button
+            className="secondary-button gallery-button"
+            onClick={() => galleryInputRef.current?.click()}
+          >
+            📁 Escolher da Galeria
+          </button>
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={handleGalleryFile}
+          />
         </>
       )}
 

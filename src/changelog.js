@@ -1,6 +1,25 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '3.2',
+    date: '05/09/2026',
+    items: [
+      '🧭 Navegação mobile refeita: no celular, a lista de abas espremida some e vira um botão flutuante (canto inferior esquerdo) que abre uma grade com todas as seções — toca e pula direto pra qualquer uma.',
+    ],
+  },
+
+  {
+    version: '3.1',
+    date: '04/09/2026',
+    items: [
+      '🖼️ Foto de etapa não corta mais em nenhuma tela (Painel, Portal do Cliente, Histórico do motorista) — mostra sempre inteira.',
+      '🔍 Clique na foto abre ela ampliada, em tamanho grande, com botão de fechar.',
+      '📁 Motorista agora pode escolher uma foto já tirada da galeria, em vez de usar só a câmera ao vivo — o carimbo (nome/placa/endereço/hora) é aplicado do mesmo jeito.',
+      '🐛 Corrigido CSS que faltava na miniatura do histórico do motorista (estava sem estilo nenhum).',
+    ],
+  },
+
+  {
     version: '3.0',
     date: '04/09/2026',
     items: [
