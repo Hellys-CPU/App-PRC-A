@@ -157,7 +157,7 @@ export default function AdminFinanceiro() {
             <tr key={e.id}>
               <td>{e.trips?.origin} → {e.trips?.destination}</td>
               <td>{tab === 'receber' ? (e.trips?.client_name || '-') : (e.trips?.drivers?.profiles?.full_name || '-')}</td>
-              <td>{formatCurrency(e.amount)}</td>
+              <td className="tabular-money">{formatCurrency(e.amount)}</td>
               <td>{e.due_date ? new Date(e.due_date).toLocaleDateString('pt-BR') : '-'}</td>
               <td>
                 <span className={`trip-badge ${e.status === 'pago' ? 'badge-done' : 'badge-assigned'}`}>

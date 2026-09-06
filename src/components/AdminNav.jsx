@@ -4,6 +4,8 @@ import { supabase } from '../supabase';
 import Brand from './Brand.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
 import MobileNavMenu from './MobileNavMenu.jsx';
+import GlobalSearch from './GlobalSearch.jsx';
+import { useChatNotifications } from '../hooks/useChatNotifications.js';
 import { useAdminRole, pageAllowed } from '../hooks/useAdminRole.js';
 
 export const NAV_TABS = [
@@ -14,7 +16,7 @@ export const NAV_TABS = [
   { page: 'mapa', path: '/mapa', label: 'Mapa', icon: '🗺️' },
   { page: 'chat', path: '/chat', label: 'Chat', icon: '💬' },
   { page: 'financeiro', path: '/financeiro', label: 'Financeiro', icon: '💰' },
-  { page: 'relatorios', path: '/relatorios', label: 'Relatórios', icon: '📈' },
+  { page: 'relatorios', path: '/relatorios', label: 'Análise', icon: '📈' },
   { page: 'configuracoes', path: '/configuracoes', label: 'Configurações', icon: '⚙️' },
   { page: 'changelog', path: '/changelog', label: 'Novidades', icon: '🆕' },
 ];
@@ -22,6 +24,7 @@ export const NAV_TABS = [
 export default function AdminNav() {
   const { permissions } = useAdminRole();
   const location = useLocation();
+  const { unreadCount } = useChatNotifications();
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -38,10 +41,12 @@ export default function AdminNav() {
             className={`admin-nav-tab${location.pathname === t.path ? ' active' : ''}`}
           >
             {t.label}
+            {t.page === 'chat' && unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
           </Link>
         ))}
       </nav>
       <div className="admin-nav-right">
+        <GlobalSearch />
         <ThemeToggle />
         <button className="logout-button" onClick={handleLogout}>Sair</button>
       </div>

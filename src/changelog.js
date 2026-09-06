@@ -1,6 +1,64 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '4.0',
+    date: '06/09/2026',
+    items: [
+      '🔧 Manutenção de verdade em Frota: registra km, tipo de serviço, e avisa quando a próxima revisão está perto.',
+      '📎 Documentos anexados na viagem (nota fiscal, canhoto), separado das fotos de etapa.',
+      '⭐ Cliente avalia o motorista (1 a 5 estrelas) depois da viagem finalizada — média aparece pro admin na lista de Motoristas.',
+      '📄 Exportar PDF na Análise, com identidade visual da PRC, além do CSV.',
+      '🔍 Busca global no topo do admin: motorista, cliente e viagem, tudo junto.',
+      '🔔 Notificação de chat: toca um som quando chega mensagem nova do motorista (se você não estiver na tela de Chat), e mostra contador na aba.',
+    ],
+  },
+
+  {
+    version: '3.6',
+    date: '05/09/2026',
+    items: [
+      '🔒 Trava: motorista não consegue mais ter duas viagens abertas ao mesmo tempo (garantido pelo banco, não só pelo app).',
+      '🔒 Trava: motorista só pode alterar o status da própria viagem, mais nada.',
+      '📝 Log de auditoria: toda etapa/foto excluída fica registrada (Configurações → Auditoria).',
+      '✅ CPF validado de verdade (dígito verificador), não só contagem de números.',
+      '🔑 Botão de redefinir senha pra motorista, admin e cliente (só Diretoria usa).',
+      '📏 Senha mínima subiu de 6 pra 8 caracteres.',
+      '💰 Card no Painel avisando quantas viagens finalizadas ainda não têm cobrança lançada.',
+      '📋 Botão "Duplicar" em Rotas — copia os valores, só troca o código.',
+      '🔒 Observação interna na viagem, visível só pro admin (nunca aparece no portal do cliente).',
+    ],
+  },
+
+  {
+    version: '3.5',
+    date: '05/09/2026',
+    items: [
+      '📊 "Relatórios" virou "Análise": agora com resumo de cobrança do cliente (quantas viagens finalizadas já foram pagas, quantas estão pendentes, quanto cada uma representa em R$).',
+      '🗓️ Filtro de período flexível: intervalo de datas, semana(s) ISO (ex: semana 34 e 35), dias específicos escolhidos à mão, ou ano inteiro.',
+      '🔬 Tabela dinâmica: escolhe o agrupamento (motorista, rota, cliente, status ou dia), a métrica (quantidade, frete ou pagamento) e o tipo de gráfico (barra, pizza ou linha) — o gráfico se monta sozinho.',
+    ],
+  },
+
+  {
+    version: '3.4',
+    date: '05/09/2026',
+    items: [
+      '📋 Tabelas redesenhadas: linha de destaque laranja no topo, cabeçalho fixo com tipografia própria, textura sutil nas linhas alternadas, barra de destaque que acende ao passar o mouse, e entrada em sequência (stagger).',
+      '🔠 Placa, código de rota e telefone agora em fonte monoespaçada (IBM Plex Mono) — leitura de dado técnico, como um documento de frete de verdade.',
+      '💰 Valores em R$ com alinhamento numérico tabular, como um extrato financeiro.',
+    ],
+  },
+
+  {
+    version: '3.3',
+    date: '05/09/2026',
+    items: [
+      '↩️ Removida a bolha de tabela — tabelas voltam a aparecer normalmente na tela, em qualquer tamanho.',
+      '👉 Bolha de navegação (menu de seções) movida pro canto inferior direito.',
+    ],
+  },
+
+  {
     version: '3.2',
     date: '05/09/2026',
     items: [

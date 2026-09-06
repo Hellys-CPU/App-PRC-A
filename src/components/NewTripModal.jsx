@@ -8,7 +8,7 @@ export default function NewTripModal({ onClose, onCreated }) {
   const [clients, setClients] = useState([]);
   const [form, setForm] = useState({
     driverId: '', routeId: '', origin: '', destination: '',
-    clientId: '', cargoDescription: '', freightValue: '', plannedApresentacaoAt: '',
+    clientId: '', cargoDescription: '', freightValue: '', plannedApresentacaoAt: '', internalNotes: '',
   });
   const [saving, setSaving] = useState(false);
   const toast = useToast();
@@ -73,6 +73,7 @@ export default function NewTripModal({ onClose, onCreated }) {
       client_id: form.clientId || null,
       client_name: selectedClient ? selectedClient.name : null,
       cargo_description: form.cargoDescription || null,
+      internal_notes: form.internalNotes || null,
       freight_value: form.freightValue ? Number(form.freightValue) : null,
       planned_apresentacao_at: form.plannedApresentacaoAt ? new Date(form.plannedApresentacaoAt).toISOString() : null,
       status: 'assigned',
@@ -149,6 +150,14 @@ export default function NewTripModal({ onClose, onCreated }) {
             type="datetime-local"
             value={form.plannedApresentacaoAt}
             onChange={(e) => setForm({ ...form, plannedApresentacaoAt: e.target.value })}
+          />
+
+          <label>Observação interna (só o admin vê, o cliente nunca vê isso)</label>
+          <textarea
+            value={form.internalNotes}
+            onChange={(e) => setForm({ ...form, internalNotes: e.target.value })}
+            placeholder="Ex: cliente pediu prioridade, motorista já avisado sobre acesso difícil..."
+            rows={2}
           />
 
           <div className="trip-actions" style={{ marginTop: 6 }}>

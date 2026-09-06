@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
 import MobileTableReveal from '../components/MobileTableReveal.jsx';
+import ResetPasswordButton from '../components/ResetPasswordButton.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { ROLE_LABELS, ROLE_PERMISSIONS, ALL_PAGES, JOB_TITLES } from '../hooks/useAdminRole.js';
 
 const CODE_PATTERN = /^[A-Z0-9]{2,12}_[A-Z0-9]{2,12}$/;
-const TABS = ['rotas', 'clientes', 'logins'];
+const TABS = ['rotas', 'clientes', 'logins', 'auditoria'];
 
 export default function AdminConfiguracoes() {
   const [tab, setTab] = useState('rotas');
@@ -21,15 +22,17 @@ export default function AdminConfiguracoes() {
         Rotas, clientes e logins administrativos — tudo que define como a operação funciona.
       </p>
 
-      <div className="mode-switch mode-switch-3" style={{ maxWidth: 420, marginBottom: 24, '--active-index': TABS.indexOf(tab) }}>
+      <div className="mode-switch mode-switch-4" style={{ maxWidth: 500, marginBottom: 24, '--active-index': TABS.indexOf(tab) }}>
         <button type="button" className={tab === 'rotas' ? 'active' : ''} onClick={() => setTab('rotas')}>Rotas</button>
         <button type="button" className={tab === 'clientes' ? 'active' : ''} onClick={() => setTab('clientes')}>Clientes</button>
         <button type="button" className={tab === 'logins' ? 'active' : ''} onClick={() => setTab('logins')}>Logins</button>
+        <button type="button" className={tab === 'auditoria' ? 'active' : ''} onClick={() => setTab('auditoria')}>Auditoria</button>
       </div>
 
       {tab === 'rotas' && <RotasPanel />}
       {tab === 'clientes' && <ClientesPanel />}
       {tab === 'logins' && <LoginsPanel />}
+      {tab === 'auditoria' && <AuditoriaPanel />}
     </div>
   );
 
@@ -97,8 +100,19 @@ function RotasPanel() {
     loadRoutes();
   }
 
-  function startEdit(r) {
-    setEditingId(r.id);
+  function duplicateRoute(r) {
+    setForm({
+      code: '',
+      origin: r.origin,
+      destination: r.destination,
+      defaultFreightValue: r.default_freight_value != null ? String(r.default_freight_value) : '',
+      driverPayoutValue: r.driver_payout_value != null ? String(r.driver_payout_value) : '',
+    });
+    toast('Valores copiados — só falta definir o código novo e salvar.', 'success');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function startEdit(r) {    setEditingId(r.id);
     setEditForm({
       code: r.code,
       origin: r.origin,
@@ -248,10 +262,10 @@ function RotasPanel() {
             }
             return (
               <tr key={r.id}>
-                <td>{r.code}</td>
+                <td className="mono-data">{r.code}</td>
                 <td>{r.origin} → {r.destination}</td>
-                <td>{r.default_freight_value != null ? Number(r.default_freight_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</td>
-                <td>{r.driver_payout_value != null ? Number(r.driver_payout_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</td>
+                <td className="tabular-money">{r.default_freight_value != null ? Number(r.default_freight_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</td>
+                <td className="tabular-money">{r.driver_payout_value != null ? Number(r.driver_payout_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</td>
                 <td style={{ fontSize: 11, color: 'var(--text-dim)' }}>
                   {r.planned_saida_after_hours != null || r.planned_chegada_after_hours != null
                     ? `+${r.planned_saida_after_hours ?? '?'}h saída · +${r.planned_chegada_after_hours ?? '?'}h cheg. (após apresentação da viagem)`
@@ -264,6 +278,7 @@ function RotasPanel() {
                 </td>
                 <td>
                   <button className="secondary-button" onClick={() => startEdit(r)}>Editar</button>
+                  <button className="secondary-button" style={{ marginLeft: 6 }} onClick={() => duplicateRoute(r)}>Duplicar</button>
                 </td>
               </tr>
             );
@@ -445,6 +460,7 @@ function ClientesPanel() {
                       Gerar Login
                     </button>
                   )}
+                  {c.auth_user_id && <ResetPasswordButton userId={c.auth_user_id} />}
                 </td>
               </tr>
             );
@@ -472,7 +488,7 @@ function ClientesPanel() {
             type="text"
             value={loginForm.password}
             onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-            minLength={6}
+            minLength={8}
           />
 
           <div className="trip-actions" style={{ marginTop: 6 }}>
@@ -542,7 +558,7 @@ function LoginsPanel() {
         <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
 
         <label>Senha</label>
-        <input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={6} />
+        <input type="text" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={8} />
 
         <label>Cargo</label>
         <select value={form.jobTitle} onChange={(e) => handleJobTitleChange(e.target.value)} required>
@@ -688,7 +704,65 @@ function EditAdminPanel({ admin, onClose, onSaved }) {
         <button className="primary-button" onClick={handleSave} disabled={saving}>
           {saving ? 'Salvando...' : 'Salvar Alterações'}
         </button>
+        <ResetPasswordButton userId={admin.id} />
       </div>
     </div>
+  );
+}
+
+function AuditoriaPanel() {
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { loadLogs(); }, []);
+
+  async function loadLogs() {
+    const { data } = await supabase
+      .from('deletion_log')
+      .select('*')
+      .order('deleted_at', { ascending: false })
+      .limit(100);
+    setLogs(data || []);
+    setLoading(false);
+  }
+
+  function describeSnapshot(log) {
+    const s = log.snapshot || {};
+    if (log.table_name === 'trip_stages') {
+      return `Etapa "${s.status}" da viagem ${String(s.trip_id || '').slice(0, 8)}...`;
+    }
+    if (log.table_name === 'photos') {
+      return `Foto: ${s.storage_path || '-'}`;
+    }
+    return JSON.stringify(s).slice(0, 80);
+  }
+
+  return (
+    <>
+      <p className="subtitle" style={{ textAlign: 'left', marginBottom: 16 }}>
+        Toda etapa ou foto excluída fica registrada aqui — o quê, quem e quando.
+        Isso não desfaz a exclusão, só garante que fica rastro.
+      </p>
+      <MobileTableReveal title="Auditoria">
+        <table className="admin-table">
+          <thead>
+            <tr><th>Quando</th><th>Tabela</th><th>O que era</th><th>Quem excluiu</th></tr>
+          </thead>
+          <tbody>
+            {logs.map((log) => (
+              <tr key={log.id}>
+                <td>{new Date(log.deleted_at).toLocaleString('pt-BR')}</td>
+                <td>{log.table_name === 'trip_stages' ? 'Etapa' : 'Foto'}</td>
+                <td>{describeSnapshot(log)}</td>
+                <td className="mono-data">{String(log.deleted_by || '-').slice(0, 8)}</td>
+              </tr>
+            ))}
+            {!loading && logs.length === 0 && (
+              <tr><td colSpan="4" className="empty-state">Nenhuma exclusão registrada ainda.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </MobileTableReveal>
+    </>
   );
 }

@@ -27,6 +27,7 @@ export default function AdminFrota() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [maintenanceId, setMaintenanceId] = useState(null);
   const toast = useToast();
 
   useEffect(() => { loadVehicles(); }, []);
@@ -36,7 +37,7 @@ export default function AdminFrota() {
   async function loadVehicles() {
     const { data } = await supabase
       .from('vehicles')
-      .select('id, plate, plate_reboque, vehicle_type, model, year, crlv_validade, active')
+      .select('id, plate, plate_reboque, vehicle_type, model, year, crlv_validade, active, current_odometer_km')
       .order('plate');
     setVehicles(data || []);
   }
@@ -129,7 +130,7 @@ export default function AdminFrota() {
       <MobileTableReveal title="Frota" icon="🚚">
         <table className="admin-table">
         <thead>
-          <tr><th>Tipo</th><th>Placa(s)</th><th>Modelo</th><th>Ano</th><th>CRLV</th><th>Status</th><th></th></tr>
+          <tr><th>Tipo</th><th>Placa(s)</th><th>Modelo</th><th>Ano</th><th>KM Atual</th><th>CRLV</th><th>Status</th><th></th></tr>
         </thead>
         <tbody>
           {vehicles.map((v) => {
@@ -138,9 +139,10 @@ export default function AdminFrota() {
             return (
               <tr key={v.id}>
                 <td>{typeLabelShort(v.vehicle_type)}</td>
-                <td>{v.plate}{v.plate_reboque ? ` / ${v.plate_reboque}` : ''}</td>
+                <td className="mono-data">{v.plate}{v.plate_reboque ? ` / ${v.plate_reboque}` : ''}</td>
                 <td>{v.model || '-'}</td>
                 <td>{v.year || '-'}</td>
+                <td className="mono-data">{v.current_odometer_km != null ? `${v.current_odometer_km.toLocaleString('pt-BR')} km` : '-'}</td>
                 <td style={expiring ? { color: 'var(--alert)', fontWeight: 700 } : undefined}>
                   {v.crlv_validade ? new Date(v.crlv_validade).toLocaleDateString('pt-BR') : '-'}
                   {expiring && days >= 0 && ` (${days}d)`}
@@ -155,12 +157,19 @@ export default function AdminFrota() {
                   <button className="secondary-button" onClick={() => setEditingId(editingId === v.id ? null : v.id)}>
                     {editingId === v.id ? 'Fechar' : 'Editar'}
                   </button>
+                  <button
+                    className="secondary-button"
+                    style={{ marginLeft: 6 }}
+                    onClick={() => setMaintenanceId(maintenanceId === v.id ? null : v.id)}
+                  >
+                    🔧 Manutenção
+                  </button>
                 </td>
               </tr>
             );
           })}
           {vehicles.length === 0 && (
-            <tr><td colSpan="7" className="empty-state">Nenhum veículo cadastrado.</td></tr>
+            <tr><td colSpan="8" className="empty-state">Nenhum veículo cadastrado.</td></tr>
           )}
         </tbody>
         </table>
@@ -171,6 +180,14 @@ export default function AdminFrota() {
           vehicle={vehicles.find((v) => v.id === editingId)}
           onClose={() => setEditingId(null)}
           onSaved={() => { setEditingId(null); loadVehicles(); }}
+        />
+      )}
+
+      {maintenanceId && (
+        <MaintenancePanel
+          vehicle={vehicles.find((v) => v.id === maintenanceId)}
+          onClose={() => setMaintenanceId(null)}
+          onSaved={loadVehicles}
         />
       )}
     </div>
@@ -248,6 +265,145 @@ function EditVehiclePanel({ vehicle, onClose, onSaved }) {
         <button className="primary-button" onClick={handleSave} disabled={saving}>
           {saving ? 'Salvando...' : 'Salvar Alterações'}
         </button>
+      </div>
+    </div>
+  );
+}
+
+const SERVICE_TYPES = [
+  { value: 'troca_oleo', label: 'Troca de óleo' },
+  { value: 'revisao', label: 'Revisão geral' },
+  { value: 'pneu', label: 'Pneu' },
+  { value: 'freio', label: 'Freio' },
+  { value: 'outro', label: 'Outro' },
+];
+
+function MaintenancePanel({ vehicle, onClose, onSaved }) {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({
+    serviceType: 'troca_oleo',
+    odometerKm: vehicle.current_odometer_km || '',
+    serviceDate: new Date().toISOString().slice(0, 10),
+    nextServiceKm: '',
+    nextServiceDate: '',
+    notes: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const toast = useToast();
+
+  useEffect(() => { loadHistory(); }, []);
+
+  async function loadHistory() {
+    const { data } = await supabase
+      .from('vehicle_maintenance')
+      .select('*')
+      .eq('vehicle_id', vehicle.id)
+      .order('service_date', { ascending: false });
+    setHistory(data || []);
+    setLoading(false);
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSaving(true);
+
+    const { data: userData } = await supabase.auth.getUser();
+
+    const { error } = await supabase.from('vehicle_maintenance').insert({
+      vehicle_id: vehicle.id,
+      service_type: form.serviceType,
+      odometer_km: form.odometerKm ? Number(form.odometerKm) : null,
+      service_date: form.serviceDate,
+      next_service_km: form.nextServiceKm ? Number(form.nextServiceKm) : null,
+      next_service_date: form.nextServiceDate || null,
+      notes: form.notes || null,
+      created_by: userData?.user?.id,
+    });
+
+    if (!error && form.odometerKm) {
+      await supabase.from('vehicles').update({ current_odometer_km: Number(form.odometerKm) }).eq('id', vehicle.id);
+    }
+
+    setSaving(false);
+
+    if (error) {
+      toast('Erro ao registrar: ' + error.message, 'error');
+      return;
+    }
+
+    toast('Manutenção registrada!', 'success');
+    setForm({ ...form, notes: '', nextServiceKm: '', nextServiceDate: '' });
+    loadHistory();
+    onSaved?.();
+  }
+
+  const nextService = history.find((h) => h.next_service_km || h.next_service_date);
+  const kmUntilNext = nextService?.next_service_km && vehicle.current_odometer_km
+    ? nextService.next_service_km - vehicle.current_odometer_km
+    : null;
+
+  return (
+    <div className="motorista-form" style={{ marginTop: 20, maxWidth: 560 }}>
+      <h2 style={{ marginTop: 0 }}>Manutenção: {vehicle.plate}</h2>
+
+      {nextService && (
+        <p className={`subtitle`} style={{ textAlign: 'left', marginBottom: 16, color: kmUntilNext != null && kmUntilNext <= 1000 ? 'var(--alert)' : 'var(--text-dim)' }}>
+          Próxima revisão: {nextService.next_service_km ? `${nextService.next_service_km.toLocaleString('pt-BR')} km` : ''}
+          {nextService.next_service_date ? ` até ${new Date(nextService.next_service_date).toLocaleDateString('pt-BR')}` : ''}
+          {kmUntilNext != null && ` (faltam ${kmUntilNext.toLocaleString('pt-BR')} km)`}
+        </p>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <label>Tipo de serviço</label>
+        <select value={form.serviceType} onChange={(e) => setForm({ ...form, serviceType: e.target.value })}>
+          {SERVICE_TYPES.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </select>
+
+        <label>Km no momento do serviço</label>
+        <input type="number" value={form.odometerKm} onChange={(e) => setForm({ ...form, odometerKm: e.target.value })} />
+
+        <label>Data do serviço</label>
+        <input type="date" value={form.serviceDate} onChange={(e) => setForm({ ...form, serviceDate: e.target.value })} />
+
+        <label>Próxima revisão — km (opcional)</label>
+        <input type="number" value={form.nextServiceKm} onChange={(e) => setForm({ ...form, nextServiceKm: e.target.value })} />
+
+        <label>Próxima revisão — data (opcional)</label>
+        <input type="date" value={form.nextServiceDate} onChange={(e) => setForm({ ...form, nextServiceDate: e.target.value })} />
+
+        <label>Observações</label>
+        <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} />
+
+        <button type="submit" className="primary-button" disabled={saving} style={{ marginTop: 10 }}>
+          {saving ? 'Salvando...' : 'Registrar Manutenção'}
+        </button>
+      </form>
+
+      <h2>Histórico</h2>
+      {loading && <p className="empty-state">Carregando...</p>}
+      <table className="admin-table">
+        <thead>
+          <tr><th>Data</th><th>Serviço</th><th>Km</th><th>Obs.</th></tr>
+        </thead>
+        <tbody>
+          {history.map((h) => (
+            <tr key={h.id}>
+              <td>{new Date(h.service_date).toLocaleDateString('pt-BR')}</td>
+              <td>{SERVICE_TYPES.find((s) => s.value === h.service_type)?.label || h.service_type}</td>
+              <td className="mono-data">{h.odometer_km != null ? `${h.odometer_km.toLocaleString('pt-BR')} km` : '-'}</td>
+              <td>{h.notes || '-'}</td>
+            </tr>
+          ))}
+          {history.length === 0 && !loading && (
+            <tr><td colSpan="4" className="empty-state">Nenhuma manutenção registrada ainda.</td></tr>
+          )}
+        </tbody>
+      </table>
+
+      <div className="trip-actions" style={{ marginTop: 16 }}>
+        <button className="secondary-button" onClick={onClose}>Fechar</button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
+import { isValidCPF } from '../lib/validators.js';
 
 export default function AdminMotoristas() {
   const [form, setForm] = useState({
@@ -26,8 +27,14 @@ export default function AdminMotoristas() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setSaving(true);
     setMessage(null);
+
+    if (!isValidCPF(form.cpf)) {
+      setMessage({ type: 'error', text: 'CPF inválido — confira os números digitados.' });
+      return;
+    }
+
+    setSaving(true);
 
     const { data: sessionData } = await supabase.auth.getSession();
     const token = sessionData?.session?.access_token;
@@ -120,7 +127,7 @@ export default function AdminMotoristas() {
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
           required
-          minLength={6}
+          minLength={8}
         />
 
         {message && (

@@ -15,6 +15,7 @@ export default function AdminNovaViagem() {
   const [scheduledDate, setScheduledDate] = useState(todayISO());
   const [clientId, setClientId] = useState('');
   const [cargoDescription, setCargoDescription] = useState('');
+  const [internalNotes, setInternalNotes] = useState('');
   const [quantities, setQuantities] = useState({}); // routeId -> quantidade
 
   const [rows, setRows] = useState([]); // linhas geradas no passo 2
@@ -118,6 +119,7 @@ export default function AdminNovaViagem() {
       client_id: clientId || null,
       client_name: selectedClient ? selectedClient.name : null,
       cargo_description: cargoDescription || null,
+      internal_notes: internalNotes || null,
       freight_value: r.freightValue,
       scheduled_date: scheduledDate || null,
       planned_apresentacao_at: r.plannedApresentacaoAt ? new Date(r.plannedApresentacaoAt).toISOString() : null,
@@ -165,6 +167,10 @@ export default function AdminNovaViagem() {
           <div>
             <label>Descrição da carga (opcional, aplica a todas)</label>
             <input value={cargoDescription} onChange={(e) => setCargoDescription(e.target.value)} placeholder="Ex: Carga geral" />
+          </div>
+          <div>
+            <label>Observação interna (aplica a todas, admin só)</label>
+            <input value={internalNotes} onChange={(e) => setInternalNotes(e.target.value)} placeholder="Opcional" />
           </div>
         </div>
 

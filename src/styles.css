@@ -67,7 +67,7 @@ h1, h2, h3, .brand-name, button, .status-label, .kanban-column-header span:first
 
 button { font-family: inherit; cursor: pointer; transition: transform 0.08s ease, background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease; }
 button:not(:disabled):active { transform: scale(0.96); }
-input, select {
+input, select, textarea {
   font-family: 'DM Sans', sans-serif;
   background: var(--ink);
   color: var(--text-strong);
@@ -75,8 +75,8 @@ input, select {
   padding: 8px 10px;
   font-size: 13px;
 }
-input:focus, select:focus { outline: none; border-color: var(--amber); }
-input::placeholder { color: var(--text-dim); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--amber); }
+input::placeholder, textarea::placeholder { color: var(--text-dim); }
 
 ::selection { background: var(--amber); color: #14181d; }
 
@@ -518,20 +518,71 @@ h2 {
 /* ---------- Tabela de motoristas ---------- */
 .admin-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-top: 3px solid var(--line);
   box-shadow: var(--shadow);
+  position: relative;
+}
+.admin-table::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--amber) 0%, var(--amber) 40%, var(--line) 40%, var(--line) 100%);
 }
 @media (max-width: 700px) {
   .admin-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .admin-table thead, .admin-table tbody, .admin-table tr { display: table; width: 100%; table-layout: auto; }
 }
-.admin-table th, .admin-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--line); font-size: 13px; }
-.admin-table th { color: var(--text-dim); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+.admin-table th, .admin-table td { padding: 15px 16px; text-align: left; border-bottom: 1px solid var(--line); font-size: 13px; }
+.admin-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--panel-raised);
+  border-bottom: 2px solid var(--line);
+}
 .admin-table td { color: var(--text); }
-.admin-table tbody tr:nth-child(even) { background: var(--panel-raised); }
+.admin-table tbody tr {
+  animation: staggerIn 0.3s ease both;
+  transition: background-color 0.15s;
+}
+.admin-table tbody tr:nth-child(1) { animation-delay: 0.01s; }
+.admin-table tbody tr:nth-child(2) { animation-delay: 0.035s; }
+.admin-table tbody tr:nth-child(3) { animation-delay: 0.06s; }
+.admin-table tbody tr:nth-child(4) { animation-delay: 0.085s; }
+.admin-table tbody tr:nth-child(5) { animation-delay: 0.11s; }
+.admin-table tbody tr:nth-child(6) { animation-delay: 0.135s; }
+.admin-table tbody tr:nth-child(n+7) { animation-delay: 0.15s; }
+.admin-table tbody tr:nth-child(even) {
+  background-image: repeating-linear-gradient(-45deg, transparent, transparent 9px, rgba(255,255,255,0.014) 9px, rgba(255,255,255,0.014) 10px);
+}
+.admin-table tbody tr:hover { background-color: var(--panel-raised); }
+.admin-table tbody td:first-child { position: relative; }
+.admin-table tbody td:first-child::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background-color 0.15s;
+}
+.admin-table tbody tr:hover td:first-child::before { background: var(--amber); }
+
+/* Dado técnico/identificador (placa, código de rota, CNH, telefone) —
+   monoespaçada, como um documento de frete de verdade. */
+.mono-data {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  font-size: 12.5px;
+}
+.tabular-money { font-variant-numeric: tabular-nums; }
 .contact-cell { display: flex; gap: 12px; font-size: 16px; }
 .contact-cell a { text-decoration: none; }
 
@@ -1249,47 +1300,13 @@ h2 {
 .mobile-table-fab { display: none; }
 
 @media (max-width: 700px) {
-  .table-desktop-only { display: none; }
-
   .mobile-table-fab {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    right: 18px;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: var(--amber);
-    color: #14181d;
-    border: none;
-    font-size: 22px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.45);
-    z-index: 500;
-    cursor: pointer;
-    animation: pulseBubble 2.4s ease-in-out infinite;
-  }
-  .mobile-table-fab:active { animation: none; transform: scale(0.92); }
-
-  @keyframes pulseBubble {
-    0%, 100% { box-shadow: 0 4px 16px rgba(0,0,0,0.45), 0 0 0 0 rgba(244,97,1,0.4); }
-    50% { box-shadow: 0 4px 16px rgba(0,0,0,0.45), 0 0 0 9px rgba(244,97,1,0); }
-  }
-
-  .mobile-table-backdrop { align-items: flex-end; padding: 0; }
-  .mobile-table-sheet {
-    width: 100%;
-    max-width: 100%;
-    max-height: 85vh;
-    border-radius: 0;
-    animation: slideUpSheet 0.22s ease;
+    display: none !important;
   }
   @keyframes slideUpSheet {
     from { transform: translateY(24px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
   }
-  .mobile-table-sheet-body { overflow-y: auto; max-height: 68vh; }
-  .mobile-table-sheet-body .admin-table { box-shadow: none; }
 }
 
 /* ---------- Escolher foto da galeria ---------- */
@@ -1347,7 +1364,7 @@ h2 {
     align-items: center;
     justify-content: center;
     position: fixed;
-    left: 18px;
+    right: 18px;
     bottom: 20px;
     width: 52px;
     height: 52px;
@@ -1417,4 +1434,109 @@ h2 {
   .mobile-nav-tile:nth-child(3n+2) { border-top-color: var(--amber); }
   .mobile-nav-tile:nth-child(3n+3) { border-top-color: var(--route); }
   .mobile-nav-tile.active { border-top-color: var(--alert) !important; background: var(--panel); }
+}
+
+/* ---------- Chips removíveis (dias específicos na Análise) ---------- */
+.chip-removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--panel-raised);
+  border: 1px solid var(--amber);
+  color: var(--text);
+  padding: 5px 6px 5px 10px;
+  font-size: 12px;
+}
+.chip-removable button {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  padding: 2px 4px;
+  font-size: 12px;
+}
+.chip-removable button:hover { color: var(--alert); }
+
+/* ---------- Redefinir senha inline ---------- */
+.reset-password-inline { display: inline-flex; gap: 4px; align-items: center; }
+
+.mode-switch-4::before { width: calc(25% - 3px); transform: translateX(calc(var(--active-index, 0) * 100%)); }
+
+/* ---------- Observação interna (só admin) ---------- */
+.internal-note {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+  background: var(--panel-raised);
+  border-left: 2px solid var(--line);
+  padding: 4px 8px;
+  margin-top: 4px;
+}
+
+/* ---------- Documentos anexados na viagem ---------- */
+.trip-documents-section { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.trip-document-row { padding: 6px 0; }
+.trip-document-name { cursor: pointer; color: var(--amber); font-size: 13px; }
+.trip-document-name:hover { text-decoration: underline; }
+.trip-document-upload {
+  display: inline-block;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+/* ---------- Avaliação do motorista pelo cliente ---------- */
+.rating-section { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.rating-stars { display: flex; gap: 6px; }
+.rating-star-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  font-size: 18px;
+  padding: 6px 10px;
+}
+.rating-star-btn:hover { border-color: var(--amber); transform: scale(1.1); }
+.rating-done { font-size: 14px; color: var(--route); }
+
+/* ---------- Busca global ---------- */
+.global-search { position: relative; }
+.global-search-box { position: relative; }
+.global-search-box input { width: 220px; }
+.global-search-results {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  width: 320px;
+  max-height: 380px;
+  overflow-y: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--amber);
+  box-shadow: var(--shadow);
+  z-index: 600;
+  padding: 8px 0;
+}
+.global-search-group {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-dim);
+  padding: 8px 14px 4px;
+  font-family: 'Space Grotesk', sans-serif;
+}
+.global-search-item { padding: 8px 14px; font-size: 13px; color: var(--text); cursor: default; }
+.global-search-item:hover { background: var(--panel-raised); }
+
+/* ---------- Badge de mensagem não lida ---------- */
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--alert);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+  margin-left: 5px;
 }

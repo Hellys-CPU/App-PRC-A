@@ -9,6 +9,7 @@ import MobileTableReveal from '../components/MobileTableReveal.jsx';
 import { useAdminRole, pageAllowed } from '../hooks/useAdminRole.js';
 import NewTripModal from '../components/NewTripModal.jsx';
 import PhotoLightbox from '../components/PhotoLightbox.jsx';
+import ResetPasswordButton from '../components/ResetPasswordButton.jsx';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -90,9 +91,10 @@ function formatElapsed(mins) {
 export default function AdminDashboard() {
   const [drivers, setDrivers] = useState([]);
   const [trips, setTrips] = useState([]);
-  const [stats, setStats] = useState({ activeDrivers: 0, activeTrips: 0, todayStages: 0, lateTrips: 0 });
+  const [stats, setStats] = useState({ activeDrivers: 0, activeTrips: 0, todayStages: 0, lateTrips: 0, unbilledCompleted: 0 });
   const [expandedTrip, setExpandedTrip] = useState(null);
   const [photoUrls, setPhotoUrls] = useState({});
+  const [documents, setDocuments] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showHistory, setShowHistory] = useState(false);
@@ -100,7 +102,7 @@ export default function AdminDashboard() {
   const [isLive, setIsLive] = useState(false);
   const [, forceTick] = useState(0);
   const navigate = useNavigate();
-  const { permissions } = useAdminRole();
+  const { permissions, role } = useAdminRole();
   const [showNewTrip, setShowNewTrip] = useState(false);
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const toast = useToast();
@@ -129,7 +131,7 @@ export default function AdminDashboard() {
   async function loadData() {
     const { data: driversData } = await supabase
       .from('drivers')
-      .select('id, vehicle_plate, active, profiles(full_name, phone, cnh_validade)')
+      .select('id, vehicle_plate, active, profiles(full_name, phone, cnh_validade), driver_ratings(rating)')
       .eq('active', true);
     setDrivers(driversData || []);
 
@@ -144,7 +146,7 @@ export default function AdminDashboard() {
     const { data: tripsData, error: tripsError } = await supabase
       .from('trips')
       .select(`
-        id, origin, destination, status, created_at, scheduled_date, planned_apresentacao_at, client_name, cargo_description, freight_value,
+        id, origin, destination, status, created_at, scheduled_date, planned_apresentacao_at, client_name, cargo_description, freight_value, internal_notes,
         drivers ( id, vehicle_plate, profiles ( full_name, phone ) ),
         routes ( planned_saida_after_hours, planned_chegada_after_hours ),
         trip_stages ( id, status, recorded_at, latitude, longitude, photos ( id, storage_path ) )
@@ -168,11 +170,26 @@ export default function AdminDashboard() {
 
     const lateTrips = sorted.filter((t) => isLate(t)).length;
 
+    // Só quem tem acesso ao Financeiro vê esse número (RLS já protege o dado,
+    // isso aqui é só pra não mostrar "0" enganoso pra quem nem teria acesso).
+    let unbilledCompleted = 0;
+    if (role === 'diretoria' || role === 'financeiro') {
+      const { data: completedTrips } = await supabase
+        .from('trips')
+        .select('id, financial_entries(entry_type)')
+        .eq('status', 'completed')
+        .not('client_id', 'is', null);
+      unbilledCompleted = (completedTrips || []).filter(
+        (t) => !(t.financial_entries || []).some((f) => f.entry_type === 'receivable_client')
+      ).length;
+    }
+
     setStats({
       activeDrivers: driversData?.length || 0,
       activeTrips: activeTrips || 0,
       todayStages: todayStages || 0,
       lateTrips,
+      unbilledCompleted,
     });
     setTrips(sorted);
     setLoading(false);
@@ -196,6 +213,48 @@ export default function AdminDashboard() {
         if (data?.signedUrl) setPhotoUrls((prev) => ({ ...prev, [photo.id]: data.signedUrl }));
       }
     }
+    loadDocuments(tripId);
+  }
+
+  async function loadDocuments(tripId) {
+    const { data } = await supabase
+      .from('trip_documents')
+      .select('id, storage_path, file_name, created_at')
+      .eq('trip_id', tripId)
+      .order('created_at', { ascending: false });
+    setDocuments((prev) => ({ ...prev, [tripId]: data || [] }));
+  }
+
+  async function handleDocumentUpload(tripId, file) {
+    if (!file) return;
+    const { data: userData } = await supabase.auth.getUser();
+    const storagePath = `${userData.user.id}/docs/${tripId}/${Date.now()}-${file.name}`;
+
+    const { error: uploadErr } = await supabase.storage.from('trip-photos').upload(storagePath, file);
+    if (uploadErr) {
+      toast('Erro ao enviar documento: ' + uploadErr.message, 'error');
+      return;
+    }
+
+    const { error: insertErr } = await supabase.from('trip_documents').insert({
+      trip_id: tripId,
+      storage_path: storagePath,
+      file_name: file.name,
+      uploaded_by: userData.user.id,
+    });
+
+    if (insertErr) {
+      toast('Erro ao registrar documento: ' + insertErr.message, 'error');
+      return;
+    }
+
+    toast('Documento anexado!', 'success');
+    loadDocuments(tripId);
+  }
+
+  async function openDocument(doc) {
+    const { data } = await supabase.storage.from('trip-photos').createSignedUrl(doc.storage_path, 3600);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
   }
 
   async function buildWhatsAppText(trip) {
@@ -304,6 +363,9 @@ export default function AdminDashboard() {
           {trip.freight_value != null && (
             <div className="trip-substatus">Frete: {Number(trip.freight_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
           )}
+          {trip.internal_notes && (
+            <div className="internal-note">🔒 {trip.internal_notes}</div>
+          )}
           <div className="trip-substatus">
             {lastStage
               ? `Última etapa: ${STAGE_LABELS[lastStage.status] || lastStage.status} às ${formatTime(lastStage.recorded_at)}`
@@ -370,6 +432,27 @@ export default function AdminDashboard() {
                   </div>
                 ))}
             </div>
+
+            <div className="trip-documents-section">
+              <h3 className="report-chart-title">Documentos (nota fiscal, canhoto)</h3>
+              {(documents[trip.id] || []).map((doc) => (
+                <div key={doc.id} className="trip-document-row">
+                  <span onClick={() => openDocument(doc)} className="trip-document-name">📎 {doc.file_name}</span>
+                </div>
+              ))}
+              {(!documents[trip.id] || documents[trip.id].length === 0) && (
+                <p className="empty-state" style={{ margin: '6px 0' }}>Nenhum documento anexado.</p>
+              )}
+              <label className="secondary-button trip-document-upload">
+                + Anexar documento
+                <input
+                  type="file"
+                  style={{ display: 'none' }}
+                  onChange={(e) => handleDocumentUpload(trip.id, e.target.files?.[0])}
+                />
+              </label>
+            </div>
+
             <div className="trip-actions">
               <button className="secondary-button" onClick={() => copyToClipboard(trip)}>Copiar texto</button>
               <button className="primary-button" onClick={() => sendToWhatsApp(trip)}>Enviar no WhatsApp</button>
@@ -394,6 +477,12 @@ export default function AdminDashboard() {
         <div className="card"><h3>{stats.activeDrivers}</h3><p>Motoristas Ativos</p></div>
         <div className="card"><h3>{stats.activeTrips}</h3><p>Viagens em Andamento</p></div>
         <div className="card"><h3 style={stats.lateTrips > 0 ? { color: 'var(--alert)' } : undefined}>{stats.lateTrips}</h3><p>Viagens Atrasadas</p></div>
+        {(role === 'diretoria' || role === 'financeiro') && (
+          <div className="card">
+            <h3 style={stats.unbilledCompleted > 0 ? { color: 'var(--alert)' } : undefined}>{stats.unbilledCompleted}</h3>
+            <p>Finalizadas sem cobrança lançada</p>
+          </div>
+        )}
       </div>
 
       <div className="section-header-row">
@@ -448,31 +537,37 @@ export default function AdminDashboard() {
       <MobileTableReveal title="Motoristas" icon="🧑‍✈️">
         <table className="admin-table">
         <thead>
-          <tr><th>Nome</th><th>Placa</th><th>Telefone</th><th>CNH</th><th>Contato</th></tr>
+          <tr><th>Nome</th><th>Placa</th><th>Telefone</th><th>CNH</th><th>Avaliação</th><th>Contato</th>{role === 'diretoria' && <th></th>}</tr>
         </thead>
         <tbody>
           {drivers.map((d) => {
             const cnhDate = d.profiles?.cnh_validade;
             const daysLeft = cnhDate ? Math.ceil((new Date(cnhDate).getTime() - Date.now()) / 86400000) : null;
             const cnhWarning = daysLeft != null && daysLeft <= 30;
+            const ratings = d.driver_ratings || [];
+            const avgRating = ratings.length ? (ratings.reduce((s, r) => s + r.rating, 0) / ratings.length) : null;
             return (
               <tr key={d.id}>
                 <td>{d.profiles?.full_name}</td>
-                <td>{d.vehicle_plate}</td>
-                <td>{d.profiles?.phone}</td>
+                <td className="mono-data">{d.vehicle_plate}</td>
+                <td className="mono-data">{d.profiles?.phone}</td>
                 <td style={cnhWarning ? { color: 'var(--alert)', fontWeight: 700 } : undefined}>
                   {cnhDate ? new Date(cnhDate).toLocaleDateString('pt-BR') : '-'}
                   {cnhWarning && (daysLeft >= 0 ? ` (${daysLeft}d)` : ' (vencida)')}
                 </td>
+                <td>{avgRating != null ? `⭐ ${avgRating.toFixed(1)} (${ratings.length})` : '-'}</td>
                 <td className="contact-cell">
                   <a href={`tel:${d.profiles?.phone}`} title="Ligar">📞</a>
                   <a href={`https://wa.me/55${d.profiles?.phone}`} target="_blank" rel="noreferrer" title="WhatsApp">💬</a>
                 </td>
+                {role === 'diretoria' && (
+                  <td><ResetPasswordButton userId={d.id} /></td>
+                )}
               </tr>
             );
           })}
           {drivers.length === 0 && (
-            <tr><td colSpan="5" className="empty-state">Nenhum motorista cadastrado ainda.</td></tr>
+            <tr><td colSpan={role === 'diretoria' ? 7 : 6} className="empty-state">Nenhum motorista cadastrado ainda.</td></tr>
           )}
         </tbody>
         </table>

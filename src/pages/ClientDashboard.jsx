@@ -46,8 +46,9 @@ export default function ClientDashboard() {
       .from('trips')
       .select(`
         id, origin, destination, status, created_at,
-        drivers ( vehicle_plate, profiles ( full_name ) ),
-        trip_stages ( id, status, recorded_at, photos ( id, storage_path ) )
+        drivers ( id, vehicle_plate, profiles ( full_name ) ),
+        trip_stages ( id, status, recorded_at, photos ( id, storage_path ) ),
+        driver_ratings ( rating, comment )
       `)
       .order('created_at', { ascending: false });
 
@@ -74,6 +75,20 @@ export default function ClientDashboard() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
+  }
+
+  async function submitRating(tripId, driverId, rating) {
+    const { data: userData } = await supabase.auth.getUser();
+    const { data: clientRow } = await supabase.from('clients').select('id').eq('auth_user_id', userData.user.id).maybeSingle();
+
+    const { error } = await supabase.from('driver_ratings').insert({
+      trip_id: tripId,
+      driver_id: driverId,
+      client_id: clientRow?.id,
+      rating,
+    });
+
+    if (!error) loadTrips();
   }
 
   function statusLabel(status) {
@@ -146,6 +161,31 @@ export default function ClientDashboard() {
                       );
                     })}
                   </div>
+
+                  {trip.status === 'completed' && (
+                    <div className="rating-section">
+                      {trip.driver_ratings?.[0] ? (
+                        <p className="rating-done">
+                          Sua avaliação: {'⭐'.repeat(trip.driver_ratings[0].rating)}{'☆'.repeat(5 - trip.driver_ratings[0].rating)}
+                        </p>
+                      ) : (
+                        <>
+                          <p className="report-chart-title" style={{ marginBottom: 8 }}>Como foi o motorista nessa viagem?</p>
+                          <div className="rating-stars">
+                            {[1, 2, 3, 4, 5].map((n) => (
+                              <button
+                                key={n}
+                                className="rating-star-btn"
+                                onClick={() => submitRating(trip.id, trip.drivers?.id, n)}
+                              >
+                                ⭐
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

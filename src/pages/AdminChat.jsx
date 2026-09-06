@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
 import { useAdminRole } from '../hooks/useAdminRole.js';
+import { useChatNotifications } from '../hooks/useChatNotifications.js';
 
 export default function AdminChat() {
   const [drivers, setDrivers] = useState([]);
@@ -15,6 +16,9 @@ export default function AdminChat() {
   const navigate = useNavigate();
 
   useEffect(() => { loadDrivers(); }, []);
+
+  const { markAsRead } = useChatNotifications();
+  useEffect(() => { markAsRead(); }, []);
 
   useEffect(() => {
     if (!selectedDriver) return;
