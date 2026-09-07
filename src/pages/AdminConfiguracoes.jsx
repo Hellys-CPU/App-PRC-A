@@ -5,6 +5,7 @@ import AdminNav from '../components/AdminNav.jsx';
 import MobileTableReveal from '../components/MobileTableReveal.jsx';
 import ResetPasswordButton from '../components/ResetPasswordButton.jsx';
 import { useToast } from '../components/Toast.jsx';
+import { calculateRoute, forwardGeocode } from '../lib/geocode.js';
 import { ROLE_LABELS, ROLE_PERMISSIONS, ALL_PAGES, JOB_TITLES } from '../hooks/useAdminRole.js';
 
 const CODE_PATTERN = /^[A-Z0-9]{2,12}_[A-Z0-9]{2,12}$/;
@@ -100,8 +101,34 @@ function RotasPanel() {
     loadRoutes();
   }
 
-  function duplicateRoute(r) {
-    setForm({
+  const [calculatingId, setCalculatingId] = useState(null);
+
+  async function calculateDistance(route) {
+    setCalculatingId(route.id);
+    try {
+      const originCoords = await forwardGeocode(route.origin);
+      const destCoords = await forwardGeocode(route.destination);
+      if (!originCoords || !destCoords) {
+        toast('Não consegui localizar origem e/ou destino. Tenta descrever o endereço com mais detalhe.', 'error');
+        return;
+      }
+      const result = await calculateRoute(originCoords, destCoords);
+      if (!result) {
+        toast('Serviço de rota indisponível no momento, tenta de novo em alguns minutos.', 'error');
+        return;
+      }
+      await supabase.from('routes').update({
+        distance_km: result.distanceKm,
+        estimated_duration_minutes: result.durationMinutes,
+      }).eq('id', route.id);
+      toast(`Calculado: ${result.distanceKm} km, ~${Math.floor(result.durationMinutes / 60)}h${result.durationMinutes % 60}min`, 'success');
+      loadRoutes();
+    } finally {
+      setCalculatingId(null);
+    }
+  }
+
+  function duplicateRoute(r) {    setForm({
       code: '',
       origin: r.origin,
       destination: r.destination,
@@ -231,7 +258,7 @@ function RotasPanel() {
       <MobileTableReveal title="Rotas" icon="🛣️">
         <table className="admin-table">
         <thead>
-          <tr><th>Código</th><th>Origem → Destino</th><th>Frete Cliente</th><th>Pagto. Motorista</th><th>Duração Planejada</th><th>Status</th><th></th></tr>
+          <tr><th>Código</th><th>Origem → Destino</th><th>Frete Cliente</th><th>Pagto. Motorista</th><th>Duração Planejada</th><th>Distância</th><th>Status</th><th></th></tr>
         </thead>
         <tbody>
           {routes.map((r) => {
@@ -249,6 +276,9 @@ function RotasPanel() {
                   <td style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 110 }}>
                     <input type="number" step="0.25" placeholder="h até saída" value={editForm.plannedSaidaAfterHours} onChange={(e) => setEditForm({ ...editForm, plannedSaidaAfterHours: e.target.value })} title="Horas até a saída" />
                     <input type="number" step="0.25" placeholder="h até chegada" value={editForm.plannedChegadaAfterHours} onChange={(e) => setEditForm({ ...editForm, plannedChegadaAfterHours: e.target.value })} title="Horas até a chegada" />
+                  </td>
+                  <td style={{ fontSize: 11, color: 'var(--text-dim)' }}>
+                    {r.distance_km != null ? `${r.distance_km} km` : '-'}
                   </td>
                   <td>
                     <span className={`trip-badge ${r.active ? 'badge-done' : 'badge-assigned'}`}>{r.active ? 'Ativa' : 'Inativa'}</span>
@@ -271,6 +301,15 @@ function RotasPanel() {
                     ? `+${r.planned_saida_after_hours ?? '?'}h saída · +${r.planned_chegada_after_hours ?? '?'}h cheg. (após apresentação da viagem)`
                     : '-'}
                 </td>
+                <td style={{ fontSize: 12 }}>
+                  {r.distance_km != null ? (
+                    <span className="mono-data">{r.distance_km} km (~{Math.floor(r.estimated_duration_minutes / 60)}h{String(r.estimated_duration_minutes % 60).padStart(2, '0')})</span>
+                  ) : (
+                    <button className="secondary-button" onClick={() => calculateDistance(r)} disabled={calculatingId === r.id}>
+                      {calculatingId === r.id ? 'Calculando...' : '📍 Calcular'}
+                    </button>
+                  )}
+                </td>
                 <td>
                   <button className="secondary-button" onClick={() => toggleActive(r)}>
                     {r.active ? 'Ativa' : 'Inativa'}
@@ -284,7 +323,7 @@ function RotasPanel() {
             );
           })}
           {routes.length === 0 && (
-            <tr><td colSpan="7" className="empty-state">Nenhuma rota cadastrada.</td></tr>
+            <tr><td colSpan="8" className="empty-state">Nenhuma rota cadastrada.</td></tr>
           )}
         </tbody>
         </table>

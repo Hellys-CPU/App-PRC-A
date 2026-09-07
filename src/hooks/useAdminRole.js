@@ -33,6 +33,7 @@ export const ALL_PAGES = [
   { key: 'mapa', label: 'Mapa' },
   { key: 'chat', label: 'Chat' },
   { key: 'financeiro', label: 'Financeiro' },
+  { key: 'folha-pagamento', label: 'Folha de Pagamento' },
   { key: 'relatorios', label: 'Relatórios' },
   { key: 'configuracoes', label: 'Configurações' },
   { key: 'changelog', label: 'Novidades' },
@@ -41,9 +42,9 @@ export const ALL_PAGES = [
 // Padrão de cada nível de acesso — só é usado quando o usuário NÃO tem permissão personalizada.
 // Configurações (rotas/clientes/valores de frete) fica só com Diretoria.
 export const ROLE_PERMISSIONS = {
-  diretoria: ['dashboard', 'nova-viagem', 'motoristas', 'frota', 'configuracoes', 'mapa', 'relatorios', 'financeiro', 'chat', 'changelog'],
+  diretoria: ['dashboard', 'nova-viagem', 'motoristas', 'frota', 'configuracoes', 'mapa', 'relatorios', 'financeiro', 'folha-pagamento', 'chat', 'changelog'],
   operacional: ['dashboard', 'nova-viagem', 'motoristas', 'frota', 'changelog'],
-  financeiro: ['dashboard', 'financeiro', 'relatorios', 'changelog'],
+  financeiro: ['dashboard', 'financeiro', 'folha-pagamento', 'relatorios', 'changelog'],
   trafego: ['dashboard', 'mapa', 'chat', 'changelog'],
   captacao: ['dashboard', 'motoristas', 'changelog'],
   manutencao: ['dashboard', 'frota', 'changelog'],

@@ -306,7 +306,11 @@ export default function DriverCamera() {
 
       await supabase.from('photos').insert({ stage_id: stage.id, storage_path: storagePath });
 
-      navigate('/');
+      if (status === 'fim_descarga') {
+        navigate(`/assinatura/${tripId}`);
+      } else {
+        navigate('/');
+      }
     } catch (e) {
       const msg = String(e.message || '');
       if (msg.includes('duplicate') || msg.includes('uq_trip_stage_once')) {

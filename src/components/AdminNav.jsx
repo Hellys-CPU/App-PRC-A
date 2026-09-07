@@ -5,6 +5,7 @@ import Brand from './Brand.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
 import MobileNavMenu from './MobileNavMenu.jsx';
 import GlobalSearch from './GlobalSearch.jsx';
+import NotificationBell from './NotificationBell.jsx';
 import { useChatNotifications } from '../hooks/useChatNotifications.js';
 import { useAdminRole, pageAllowed } from '../hooks/useAdminRole.js';
 
@@ -16,6 +17,7 @@ export const NAV_TABS = [
   { page: 'mapa', path: '/mapa', label: 'Mapa', icon: '🗺️' },
   { page: 'chat', path: '/chat', label: 'Chat', icon: '💬' },
   { page: 'financeiro', path: '/financeiro', label: 'Financeiro', icon: '💰' },
+  { page: 'folha-pagamento', path: '/folha-pagamento', label: 'Folha de Pagamento', icon: '🧾' },
   { page: 'relatorios', path: '/relatorios', label: 'Análise', icon: '📈' },
   { page: 'configuracoes', path: '/configuracoes', label: 'Configurações', icon: '⚙️' },
   { page: 'changelog', path: '/changelog', label: 'Novidades', icon: '🆕' },
@@ -47,6 +49,7 @@ export default function AdminNav() {
       </nav>
       <div className="admin-nav-right">
         <GlobalSearch />
+        <NotificationBell />
         <ThemeToggle />
         <button className="logout-button" onClick={handleLogout}>Sair</button>
       </div>

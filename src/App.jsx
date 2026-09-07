@@ -11,6 +11,7 @@ import AdminMapa from './pages/AdminMapa.jsx';
 import AdminRelatorios from './pages/AdminRelatorios.jsx';
 import AdminConfiguracoes from './pages/AdminConfiguracoes.jsx';
 import AdminFinanceiro from './pages/AdminFinanceiro.jsx';
+import AdminFolhaPagamento from './pages/AdminFolhaPagamento.jsx';
 import AdminChat from './pages/AdminChat.jsx';
 import AdminChangelog from './pages/AdminChangelog.jsx';
 import RequireRole from './components/RequireRole.jsx';
@@ -18,6 +19,7 @@ import DriverChat from './pages/DriverChat.jsx';
 import DriverHome from './pages/DriverHome.jsx';
 import DriverCamera from './pages/DriverCamera.jsx';
 import DriverHistory from './pages/DriverHistory.jsx';
+import DriverSignature from './pages/DriverSignature.jsx';
 import ClientDashboard from './pages/ClientDashboard.jsx';
 import InstallPrompt from './components/InstallPrompt.jsx';
 
@@ -81,6 +83,7 @@ export default function App() {
           <Route path="/relatorios" element={<RequireRole page="relatorios"><AdminRelatorios /></RequireRole>} />
           <Route path="/configuracoes" element={<RequireRole page="configuracoes"><AdminConfiguracoes /></RequireRole>} />
           <Route path="/financeiro" element={<RequireRole page="financeiro"><AdminFinanceiro /></RequireRole>} />
+          <Route path="/folha-pagamento" element={<RequireRole page="folha-pagamento"><AdminFolhaPagamento /></RequireRole>} />
           <Route path="/chat" element={<RequireRole page="chat"><AdminChat /></RequireRole>} />
           <Route path="/admins" element={<Navigate to="/configuracoes" replace />} />
           <Route path="/changelog" element={<RequireRole page="changelog"><AdminChangelog /></RequireRole>} />
@@ -97,6 +100,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<DriverHome />} />
           <Route path="/camera/:status" element={<DriverCamera />} />
+          <Route path="/assinatura/:tripId" element={<DriverSignature />} />
           <Route path="/historico" element={<DriverHistory />} />
           <Route path="/chat" element={<DriverChat />} />
           <Route path="*" element={<Navigate to="/" />} />

@@ -146,7 +146,7 @@ export default function AdminDashboard() {
     const { data: tripsData, error: tripsError } = await supabase
       .from('trips')
       .select(`
-        id, origin, destination, status, created_at, scheduled_date, planned_apresentacao_at, client_name, cargo_description, freight_value, internal_notes,
+        id, origin, destination, status, created_at, scheduled_date, planned_apresentacao_at, client_name, cargo_description, freight_value, internal_notes, signature_storage_path,
         drivers ( id, vehicle_plate, profiles ( full_name, phone ) ),
         routes ( planned_saida_after_hours, planned_chegada_after_hours ),
         trip_stages ( id, status, recorded_at, latitude, longitude, photos ( id, storage_path ) )
@@ -254,6 +254,11 @@ export default function AdminDashboard() {
 
   async function openDocument(doc) {
     const { data } = await supabase.storage.from('trip-photos').createSignedUrl(doc.storage_path, 3600);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  }
+
+  async function openSignature(storagePath) {
+    const { data } = await supabase.storage.from('trip-photos').createSignedUrl(storagePath, 3600);
     if (data?.signedUrl) window.open(data.signedUrl, '_blank');
   }
 
@@ -452,6 +457,15 @@ export default function AdminDashboard() {
                 />
               </label>
             </div>
+
+            {trip.signature_storage_path && (
+              <div className="trip-documents-section">
+                <h3 className="report-chart-title">Assinatura de Recebimento</h3>
+                <button className="secondary-button" onClick={() => openSignature(trip.signature_storage_path)}>
+                  ✍️ Ver assinatura
+                </button>
+              </div>
+            )}
 
             <div className="trip-actions">
               <button className="secondary-button" onClick={() => copyToClipboard(trip)}>Copiar texto</button>

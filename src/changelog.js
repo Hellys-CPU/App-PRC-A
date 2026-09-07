@@ -1,6 +1,25 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '4.2',
+    date: '07/09/2026',
+    items: [
+      '🐛 Corrigido bug sério: a tela de Chat ficava em branco ao abrir. Causa: duas escutas Realtime com o mesmo nome rodando ao mesmo tempo (uma do AdminNav, outra duplicada dentro do próprio Chat) por causa da notificação de mensagem nova.',
+    ],
+  },
+
+  {
+    version: '4.1',
+    date: '06/09/2026',
+    items: [
+      '✍️ Assinatura digital do cliente: depois do Fim da Descarga, o motorista pede pro cliente assinar na tela do celular.',
+      '🔔 Central de notificações (sino): CNH vencendo, viagem parada há muito tempo, e cobrança pendente, tudo num lugar só.',
+      '🧾 Folha de Pagamento: soma o pagamento por viagem no período, permite lançar desconto/bônus por motorista, e gera recibo em PDF.',
+      '📍 Roteirização: botão "Calcular" em cada rota traz distância e tempo estimado de verdade (válido pra estradas reais, não linha reta).',
+    ],
+  },
+
+  {
     version: '4.0',
     date: '06/09/2026',
     items: [

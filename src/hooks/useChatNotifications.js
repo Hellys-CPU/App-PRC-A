@@ -71,3 +71,12 @@ export function useChatNotifications() {
 
   return { unreadCount, markAsRead };
 }
+
+// Versão "sem hook" — só marca como lido, sem abrir uma escuta Realtime nova.
+// Usar essa em telas (como o Chat) que já têm o hook completo rodando no
+// AdminNav por cima — evitar duas escutas com o mesmo nome ao mesmo tempo.
+export function markChatAsReadStandalone() {
+  const now = new Date().toISOString();
+  localStorage.setItem(LAST_SEEN_KEY, now);
+  chatEvents.dispatchEvent(new Event('read'));
+}
