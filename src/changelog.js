@@ -1,6 +1,23 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '4.4',
+    date: '08/09/2026',
+    items: [
+      '🐛 Corrigido: o mapa (Leaflet) ficava por cima do menu de navegação e dos avisos no celular. O mapa usa um "nível de camada" interno próprio bem alto — aumentei a prioridade do menu, das notificações e dos avisos de sucesso/erro pra sempre ficarem por cima, não importa a tela.',
+    ],
+  },
+
+  {
+    version: '4.3',
+    date: '07/09/2026',
+    items: [
+      '🗂️ Financeiro, Folha de Pagamento e Análise viraram um dropdown "Financeiro ▾" na barra de abas do computador, pra não estourar mais a largura da tela (no celular, cada um continua aparecendo separado na grade).',
+      '🐛 Corrigida tabela de Motoristas: coluna de senha sem título no cabeçalho, e um jeito de desenhar a borda da tabela que criava linha dupla estranha em todas as tabelas do sistema.',
+    ],
+  },
+
+  {
     version: '4.2',
     date: '07/09/2026',
     items: [

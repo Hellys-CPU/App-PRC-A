@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../supabase';
 import Brand from './Brand.jsx';
@@ -23,6 +23,43 @@ export const NAV_TABS = [
   { page: 'changelog', path: '/changelog', label: 'Novidades', icon: '🆕' },
 ];
 
+// Só na aba horizontal do desktop: agrupa itens de dinheiro/análise num
+// dropdown só, pra não estourar a largura da tela com 11 abas soltas.
+// No celular (grade do MobileNavMenu) cada item continua aparecendo solto.
+const GROUP_PAGES = ['financeiro', 'folha-pagamento', 'relatorios'];
+const GROUP_LABEL = 'Financeiro';
+
+function FinanceDropdown({ items, location }) {
+  const [open, setOpen] = useState(false);
+  const isActive = items.some((t) => t.path === location.pathname);
+
+  return (
+    <div className="admin-nav-dropdown" onMouseLeave={() => setOpen(false)}>
+      <button
+        className={`admin-nav-tab admin-nav-dropdown-trigger${isActive ? ' active' : ''}`}
+        onClick={() => setOpen((v) => !v)}
+        onMouseEnter={() => setOpen(true)}
+      >
+        {GROUP_LABEL} ▾
+      </button>
+      {open && (
+        <div className="admin-nav-dropdown-menu">
+          {items.map((t) => (
+            <Link
+              key={t.page}
+              to={t.path}
+              className={`admin-nav-dropdown-item${location.pathname === t.path ? ' active' : ''}`}
+              onClick={() => setOpen(false)}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminNav() {
   const { permissions } = useAdminRole();
   const location = useLocation();
@@ -32,20 +69,31 @@ export default function AdminNav() {
     await supabase.auth.signOut();
   }
 
+  const allowedTabs = NAV_TABS.filter((t) => pageAllowed(permissions, t.page));
+  const groupTabs = allowedTabs.filter((t) => GROUP_PAGES.includes(t.page));
+  let groupRendered = false;
+
   return (
     <div className="admin-nav">
       <div className="admin-nav-brand"><Brand /></div>
       <nav className="admin-nav-tabs">
-        {NAV_TABS.filter((t) => pageAllowed(permissions, t.page)).map((t) => (
-          <Link
-            key={t.page}
-            to={t.path}
-            className={`admin-nav-tab${location.pathname === t.path ? ' active' : ''}`}
-          >
-            {t.label}
-            {t.page === 'chat' && unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
-          </Link>
-        ))}
+        {allowedTabs.map((t) => {
+          if (GROUP_PAGES.includes(t.page)) {
+            if (groupRendered) return null;
+            groupRendered = true;
+            return <FinanceDropdown key="finance-group" items={groupTabs} location={location} />;
+          }
+          return (
+            <Link
+              key={t.page}
+              to={t.path}
+              className={`admin-nav-tab${location.pathname === t.path ? ' active' : ''}`}
+            >
+              {t.label}
+              {t.page === 'chat' && unreadCount > 0 && <span className="nav-badge">{unreadCount}</span>}
+            </Link>
+          );
+        })}
       </nav>
       <div className="admin-nav-right">
         <GlobalSearch />

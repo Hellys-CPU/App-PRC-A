@@ -518,8 +518,7 @@ h2 {
 /* ---------- Tabela de motoristas ---------- */
 .admin-table {
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   background: var(--panel);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
@@ -755,7 +754,7 @@ h2 {
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
-  z-index: 1000;
+  z-index: 5002;
   pointer-events: none;
 }
 .toast {
@@ -1142,7 +1141,7 @@ h2 {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  z-index: 1000;
+  z-index: 5000;
   animation: toastIn 0.2s ease;
 }
 .modal-panel {
@@ -1370,7 +1369,7 @@ h2 {
     height: 52px;
     background: var(--panel-raised);
     border: 2px solid var(--amber);
-    z-index: 500;
+    z-index: 5000;
     cursor: pointer;
   }
   .mobile-nav-fab-bars,
@@ -1511,7 +1510,7 @@ h2 {
   border: 1px solid var(--line);
   border-top: 3px solid var(--amber);
   box-shadow: var(--shadow);
-  z-index: 600;
+  z-index: 5001;
   padding: 8px 0;
 }
 .global-search-group {
@@ -1567,7 +1566,7 @@ h2 {
   border: 1px solid var(--line);
   border-top: 3px solid var(--amber);
   box-shadow: var(--shadow);
-  z-index: 600;
+  z-index: 5001;
   padding-bottom: 6px;
 }
 .notification-item {
@@ -1578,3 +1577,33 @@ h2 {
 }
 .notification-item.notification-alert { border-left-color: var(--alert); color: var(--text); }
 .notification-item.notification-warning { border-left-color: var(--amber); color: var(--text); }
+
+/* ---------- Dropdown de abas agrupadas (Financeiro) ---------- */
+.admin-nav-dropdown { position: relative; }
+.admin-nav-dropdown-trigger {
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+.admin-nav-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--amber);
+  box-shadow: var(--shadow);
+  z-index: 5001;
+  padding: 4px 0;
+}
+.admin-nav-dropdown-item {
+  display: block;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text);
+  text-decoration: none;
+}
+.admin-nav-dropdown-item:hover { background: var(--panel-raised); }
+.admin-nav-dropdown-item.active { color: var(--amber); font-weight: 600; }

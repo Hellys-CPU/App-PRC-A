@@ -551,7 +551,7 @@ export default function AdminDashboard() {
       <MobileTableReveal title="Motoristas" icon="🧑‍✈️">
         <table className="admin-table">
         <thead>
-          <tr><th>Nome</th><th>Placa</th><th>Telefone</th><th>CNH</th><th>Avaliação</th><th>Contato</th>{role === 'diretoria' && <th></th>}</tr>
+          <tr><th>Nome</th><th>Placa</th><th>Telefone</th><th>CNH</th><th>Avaliação</th><th>Contato</th>{role === 'diretoria' && <th>Acesso</th>}</tr>
         </thead>
         <tbody>
           {drivers.map((d) => {
