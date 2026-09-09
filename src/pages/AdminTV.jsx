@@ -70,7 +70,7 @@ export default function AdminTV() {
 
     if (points.length > 0) {
       const bounds = window.L.latLngBounds(points.map((p) => [p.latitude, p.longitude]));
-      mapInstance.current.fitBounds(bounds, { padding: [30, 30] });
+      mapInstance.current.fitBounds(bounds, { padding: [30, 30], maxZoom: 8 });
     }
   }, [points]);
 

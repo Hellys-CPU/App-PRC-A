@@ -1,6 +1,14 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '5.2',
+    date: '09/09/2026',
+    items: [
+      '🗺️ Zoom do mapa (Modo TV e tela de Mapa normal) agora tem um limite máximo — não aproxima demais quando os caminhões estão perto um do outro.',
+    ],
+  },
+
+  {
     version: '5.1',
     date: '09/09/2026',
     items: [
