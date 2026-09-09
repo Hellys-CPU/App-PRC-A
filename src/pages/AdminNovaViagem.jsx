@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import AdminNav from '../components/AdminNav.jsx';
 import { useToast } from '../components/Toast.jsx';
@@ -8,6 +9,7 @@ function todayISO() {
 }
 
 export default function AdminNovaViagem() {
+  const navigate = useNavigate();
   const [drivers, setDrivers] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [clients, setClients] = useState([]);
@@ -148,6 +150,9 @@ export default function AdminNovaViagem() {
       <p className="subtitle" style={{ textAlign: 'left', marginBottom: 20 }}>
         Defina quantas viagens gerar por rota, depois escolha o motorista de cada uma.
       </p>
+      <button className="secondary-button" style={{ marginBottom: 20 }} onClick={() => navigate('/recorrencia')}>
+        🔁 Programação Recorrente (toda semana automaticamente)
+      </button>
 
       <div className="mass-step">
         <h2 style={{ marginTop: 0 }}>Passo 1 — Quantidades</h2>

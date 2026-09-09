@@ -20,7 +20,13 @@ import DriverHome from './pages/DriverHome.jsx';
 import DriverCamera from './pages/DriverCamera.jsx';
 import DriverHistory from './pages/DriverHistory.jsx';
 import DriverSignature from './pages/DriverSignature.jsx';
+import DriverStops from './pages/DriverStops.jsx';
+import DriverChecklist from './pages/DriverChecklist.jsx';
+import AdminMySecurity from './pages/AdminMySecurity.jsx';
+import DriverIncident from './pages/DriverIncident.jsx';
 import ClientDashboard from './pages/ClientDashboard.jsx';
+import AdminRecorrencia from './pages/AdminRecorrencia.jsx';
+import AdminTV from './pages/AdminTV.jsx';
 import InstallPrompt from './components/InstallPrompt.jsx';
 
 export default function App() {
@@ -78,6 +84,8 @@ export default function App() {
           <Route path="/" element={<RequireRole page="dashboard"><AdminDashboard /></RequireRole>} />
           <Route path="/motoristas" element={<RequireRole page="motoristas"><AdminMotoristas /></RequireRole>} />
           <Route path="/nova-viagem" element={<RequireRole page="nova-viagem"><AdminNovaViagem /></RequireRole>} />
+          <Route path="/recorrencia" element={<RequireRole page="nova-viagem"><AdminRecorrencia /></RequireRole>} />
+          <Route path="/tv" element={<AdminTV />} />
           <Route path="/frota" element={<RequireRole page="frota"><AdminFrota /></RequireRole>} />
           <Route path="/mapa" element={<RequireRole page="mapa"><AdminMapa /></RequireRole>} />
           <Route path="/relatorios" element={<RequireRole page="relatorios"><AdminRelatorios /></RequireRole>} />
@@ -87,6 +95,7 @@ export default function App() {
           <Route path="/chat" element={<RequireRole page="chat"><AdminChat /></RequireRole>} />
           <Route path="/admins" element={<Navigate to="/configuracoes" replace />} />
           <Route path="/changelog" element={<RequireRole page="changelog"><AdminChangelog /></RequireRole>} />
+          <Route path="/minha-seguranca" element={<AdminMySecurity />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
         <InstallPrompt />
@@ -101,6 +110,9 @@ export default function App() {
           <Route path="/" element={<DriverHome />} />
           <Route path="/camera/:status" element={<DriverCamera />} />
           <Route path="/assinatura/:tripId" element={<DriverSignature />} />
+          <Route path="/paradas" element={<DriverStops />} />
+          <Route path="/checklist" element={<DriverChecklist />} />
+          <Route path="/ocorrencia" element={<DriverIncident />} />
           <Route path="/historico" element={<DriverHistory />} />
           <Route path="/chat" element={<DriverChat />} />
           <Route path="*" element={<Navigate to="/" />} />

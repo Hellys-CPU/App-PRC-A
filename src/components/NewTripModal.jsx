@@ -10,6 +10,8 @@ export default function NewTripModal({ onClose, onCreated }) {
     driverId: '', routeId: '', origin: '', destination: '',
     clientId: '', cargoDescription: '', freightValue: '', plannedApresentacaoAt: '', internalNotes: '',
   });
+  const [stopAddresses, setStopAddresses] = useState([]);
+  const [newStopAddress, setNewStopAddress] = useState('');
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
@@ -65,7 +67,7 @@ export default function NewTripModal({ onClose, onCreated }) {
 
     const selectedClient = clients.find((c) => c.id === form.clientId);
 
-    const { error } = await supabase.from('trips').insert({
+    const { data: newTrip, error } = await supabase.from('trips').insert({
       driver_id: form.driverId,
       route_id: form.routeId || null,
       origin: form.origin,
@@ -77,7 +79,16 @@ export default function NewTripModal({ onClose, onCreated }) {
       freight_value: form.freightValue ? Number(form.freightValue) : null,
       planned_apresentacao_at: form.plannedApresentacaoAt ? new Date(form.plannedApresentacaoAt).toISOString() : null,
       status: 'assigned',
-    });
+    }).select('id').single();
+
+    if (!error && stopAddresses.length > 0) {
+      const stopsPayload = stopAddresses.map((address, i) => ({
+        trip_id: newTrip.id,
+        sequence: i + 1,
+        address,
+      }));
+      await supabase.from('trip_stops').insert(stopsPayload);
+    }
 
     setSaving(false);
 
@@ -89,6 +100,15 @@ export default function NewTripModal({ onClose, onCreated }) {
     toast('Viagem atribuída com sucesso!', 'success');
     onCreated?.();
     onClose();
+  }
+
+  function addStop() {
+    if (!newStopAddress.trim()) return;
+    setStopAddresses([...stopAddresses, newStopAddress.trim()]);
+    setNewStopAddress('');
+  }
+  function removeStop(index) {
+    setStopAddresses(stopAddresses.filter((_, i) => i !== index));
   }
 
   return (
@@ -159,6 +179,28 @@ export default function NewTripModal({ onClose, onCreated }) {
             placeholder="Ex: cliente pediu prioridade, motorista já avisado sobre acesso difícil..."
             rows={2}
           />
+
+          <label>Paradas de entrega (opcional — deixe vazio pra viagem de destino único)</label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <input
+              type="text"
+              value={newStopAddress}
+              onChange={(e) => setNewStopAddress(e.target.value)}
+              placeholder="Endereço da parada"
+              style={{ flex: 1 }}
+            />
+            <button type="button" className="secondary-button" onClick={addStop}>+ Adicionar</button>
+          </div>
+          {stopAddresses.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              {stopAddresses.map((addr, i) => (
+                <div key={i} className="stop-row" style={{ padding: '8px 12px', marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13 }}>{i + 1}. {addr}</span>
+                  <button type="button" className="secondary-button" onClick={() => removeStop(i)}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="trip-actions" style={{ marginTop: 6 }}>
             <button type="button" className="secondary-button" onClick={onClose}>Cancelar</button>

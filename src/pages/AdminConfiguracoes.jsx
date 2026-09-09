@@ -9,7 +9,7 @@ import { calculateRoute, forwardGeocode } from '../lib/geocode.js';
 import { ROLE_LABELS, ROLE_PERMISSIONS, ALL_PAGES, JOB_TITLES } from '../hooks/useAdminRole.js';
 
 const CODE_PATTERN = /^[A-Z0-9]{2,12}_[A-Z0-9]{2,12}$/;
-const TABS = ['rotas', 'clientes', 'logins', 'auditoria'];
+const TABS = ['rotas', 'clientes', 'logins', 'auditoria', 'ocorrencias'];
 
 export default function AdminConfiguracoes() {
   const [tab, setTab] = useState('rotas');
@@ -23,17 +23,19 @@ export default function AdminConfiguracoes() {
         Rotas, clientes e logins administrativos — tudo que define como a operação funciona.
       </p>
 
-      <div className="mode-switch mode-switch-4" style={{ maxWidth: 500, marginBottom: 24, '--active-index': TABS.indexOf(tab) }}>
+      <div className="mode-switch mode-switch-5" style={{ maxWidth: 620, marginBottom: 24, '--active-index': TABS.indexOf(tab) }}>
         <button type="button" className={tab === 'rotas' ? 'active' : ''} onClick={() => setTab('rotas')}>Rotas</button>
         <button type="button" className={tab === 'clientes' ? 'active' : ''} onClick={() => setTab('clientes')}>Clientes</button>
         <button type="button" className={tab === 'logins' ? 'active' : ''} onClick={() => setTab('logins')}>Logins</button>
         <button type="button" className={tab === 'auditoria' ? 'active' : ''} onClick={() => setTab('auditoria')}>Auditoria</button>
+        <button type="button" className={tab === 'ocorrencias' ? 'active' : ''} onClick={() => setTab('ocorrencias')}>Ocorrências</button>
       </div>
 
       {tab === 'rotas' && <RotasPanel />}
       {tab === 'clientes' && <ClientesPanel />}
       {tab === 'logins' && <LoginsPanel />}
       {tab === 'auditoria' && <AuditoriaPanel />}
+      {tab === 'ocorrencias' && <OcorrenciasPanel />}
     </div>
   );
 
@@ -802,6 +804,81 @@ function AuditoriaPanel() {
           </tbody>
         </table>
       </MobileTableReveal>
+    </>
+  );
+}
+
+function OcorrenciasPanel() {
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [photoUrls, setPhotoUrls] = useState({});
+  const toast = useToast();
+
+  useEffect(() => { loadIncidents(); }, []);
+
+  async function loadIncidents() {
+    const { data } = await supabase
+      .from('incidents')
+      .select('*, drivers(profiles(full_name)), trips(origin, destination)')
+      .order('created_at', { ascending: false });
+    setIncidents(data || []);
+    setLoading(false);
+
+    for (const inc of data || []) {
+      if (inc.photo_storage_path && !photoUrls[inc.id]) {
+        const { data: signed } = await supabase.storage.from('trip-photos').createSignedUrl(inc.photo_storage_path, 3600);
+        if (signed?.signedUrl) setPhotoUrls((prev) => ({ ...prev, [inc.id]: signed.signedUrl }));
+      }
+    }
+  }
+
+  async function reviewIncident(id, status) {
+    const { data: userData } = await supabase.auth.getUser();
+    const { error } = await supabase.from('incidents').update({
+      status,
+      reviewed_by: userData.user.id,
+      reviewed_at: new Date().toISOString(),
+    }).eq('id', id);
+
+    if (error) {
+      toast('Erro: ' + error.message, 'error');
+      return;
+    }
+    toast(status === 'aprovada' ? 'Ocorrência aprovada.' : 'Ocorrência rejeitada.', 'success');
+    loadIncidents();
+  }
+
+  return (
+    <>
+      <p className="subtitle" style={{ textAlign: 'left', marginBottom: 16 }}>
+        Avarias e ocorrências reportadas pelos motoristas, aguardando revisão.
+      </p>
+      {loading && <p className="empty-state">Carregando...</p>}
+      {!loading && incidents.length === 0 && <p className="empty-state">Nenhuma ocorrência registrada.</p>}
+      <div className="stops-list">
+        {incidents.map((inc) => (
+          <div key={inc.id} className="stop-row">
+            <div className="stop-row-header" style={{ justifyContent: 'space-between', width: '100%' }}>
+              <div>
+                <strong>{inc.drivers?.profiles?.full_name || 'Motorista'}</strong>
+                {inc.trips && <span className="stop-meta"> — {inc.trips.origin} → {inc.trips.destination}</span>}
+                <div className="stop-meta">{new Date(inc.created_at).toLocaleString('pt-BR')}</div>
+                <p style={{ margin: '8px 0', fontSize: 13 }}>{inc.description}</p>
+                {photoUrls[inc.id] && (
+                  <img src={photoUrls[inc.id]} alt="Ocorrência" className="stage-photo" style={{ cursor: 'default' }} />
+                )}
+              </div>
+              <span className={`incident-status-badge incident-status-${inc.status}`}>{inc.status}</span>
+            </div>
+            {inc.status === 'pendente' && (
+              <div className="trip-actions" style={{ marginTop: 10 }}>
+                <button className="secondary-button" onClick={() => reviewIncident(inc.id, 'rejeitada')}>Rejeitar</button>
+                <button className="primary-button" onClick={() => reviewIncident(inc.id, 'aprovada')}>Aprovar</button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </>
   );
 }

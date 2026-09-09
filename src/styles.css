@@ -1606,3 +1606,102 @@ h2 {
 }
 .admin-nav-dropdown-item:hover { background: var(--panel-raised); }
 .admin-nav-dropdown-item.active { color: var(--amber); font-weight: 600; }
+
+/* ---------- Múltiplas paradas ---------- */
+.stops-progress-button {
+  background: var(--panel-raised) !important;
+  border: 1px solid var(--amber);
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: 6px;
+}
+.stops-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--ink);
+  border: 1px solid var(--line);
+}
+.stops-progress-fill { height: 100%; background: var(--amber); transition: width 0.3s ease; }
+.status-button.status-blocked { opacity: 0.5; cursor: not-allowed; background: var(--panel-raised) !important; }
+
+.stops-list { display: flex; flex-direction: column; gap: 10px; }
+.stop-row {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line);
+  padding: 14px;
+}
+.stop-row.stop-done { border-left-color: var(--route); opacity: 0.75; }
+.stop-row.stop-next { border-left-color: var(--amber); }
+.stop-row-header { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+.stop-sequence {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--panel-raised);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+.stop-meta { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+/* ---------- Barra de progresso no card (etapas gerais e paradas) ---------- */
+.card-stops-progress { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 10px; color: var(--text-dim); }
+.card-stops-progress .stops-progress-bar { flex: 1; height: 4px; }
+
+.mode-switch-5::before { width: calc(20% - 3px); transform: translateX(calc(var(--active-index, 0) * 100%)); }
+.checklist-item { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; cursor: pointer; }
+.checklist-item input { width: 18px; height: 18px; }
+.incident-status-badge { padding: 3px 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+.incident-status-pendente { background: rgba(244,97,1,0.15); color: var(--amber); }
+.incident-status-aprovada { background: rgba(47,174,111,0.15); color: var(--route); }
+.incident-status-rejeitada { background: rgba(224,57,63,0.15); color: var(--alert); }
+
+/* ---------- Skeleton loading ---------- */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+.skeleton-block {
+  background: var(--panel-raised);
+  animation: skeletonPulse 1.3s ease-in-out infinite;
+}
+.skeleton-card { animation: none; }
+.skeleton-card .skeleton-block { animation: skeletonPulse 1.3s ease-in-out infinite; }
+
+/* ---------- Modo TV (painel de parede) ---------- */
+.tv-mode {
+  background: var(--ink);
+  min-height: 100vh;
+  padding: 40px 50px;
+  font-family: 'DM Sans', sans-serif;
+}
+.tv-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 40px; }
+.tv-clock { font-family: 'Space Grotesk', sans-serif; font-size: 56px; font-weight: 700; color: var(--text-strong); }
+.tv-date { font-size: 20px; color: var(--text-dim); text-transform: capitalize; }
+.tv-stats { display: flex; gap: 24px; margin-bottom: 50px; }
+.tv-stat {
+  flex: 1;
+  background: var(--panel);
+  border-top: 4px solid var(--amber);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tv-stat-alert { border-top-color: var(--alert); }
+.tv-stat-number { font-family: 'Space Grotesk', sans-serif; font-size: 72px; font-weight: 700; color: var(--text-strong); }
+.tv-stat span:last-child { font-size: 18px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+.tv-trips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+.tv-trip-card { background: var(--panel); border-left: 5px solid var(--route); padding: 24px; }
+.tv-trip-card.tv-trip-late { border-left-color: var(--alert); animation: skeletonPulse 2s ease-in-out infinite; }
+.tv-trip-plate { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 700; color: var(--amber); }
+.tv-trip-driver { font-size: 18px; color: var(--text-strong); margin-top: 4px; }
+.tv-trip-route { font-size: 14px; color: var(--text-dim); margin-top: 8px; }
+.tv-trip-stage { font-size: 16px; color: var(--text); margin-top: 12px; font-weight: 600; }
+.tv-trip-elapsed { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+.tv-empty { font-size: 20px; color: var(--text-dim); }

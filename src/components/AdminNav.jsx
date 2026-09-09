@@ -6,6 +6,7 @@ import ThemeToggle from './ThemeToggle.jsx';
 import MobileNavMenu from './MobileNavMenu.jsx';
 import GlobalSearch from './GlobalSearch.jsx';
 import NotificationBell from './NotificationBell.jsx';
+import HelpButton from './HelpButton.jsx';
 import { useChatNotifications } from '../hooks/useChatNotifications.js';
 import { useAdminRole, pageAllowed } from '../hooks/useAdminRole.js';
 
@@ -98,6 +99,7 @@ export default function AdminNav() {
       <div className="admin-nav-right">
         <GlobalSearch />
         <NotificationBell />
+        <HelpButton />
         <ThemeToggle />
         <button className="logout-button" onClick={handleLogout}>Sair</button>
       </div>

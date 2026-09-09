@@ -1,6 +1,24 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '5.0',
+    date: '08/09/2026',
+    items: [
+      '📍 Múltiplas paradas: uma viagem pode ter vários pontos de entrega em sequência, cada um com foto de comprovação. Progresso "X/Y paradas" visível no card do Painel.',
+      '📊 Barra de progresso geral (X de 4 etapas) em todo card de viagem.',
+      '✅ Checklist de saída do veículo, pro motorista conferir antes de partir.',
+      '⚠️ Ocorrência/avaria: motorista reporta com foto, admin aprova ou rejeita em Configurações → Ocorrências.',
+      '🔐 Autenticação em duas etapas (2FA) por QR code, em Minha Segurança.',
+      '🔁 Programação recorrente: cadastra "toda segunda, rota X" e gera as viagens da semana com um clique.',
+      '⬇️ Motorista e cliente podem baixar os próprios dados (LGPD).',
+      '📺 Modo TV: painel de parede com números grandes, sem menu, pra monitor fixo no galpão.',
+      '❓ Botão de ajuda contextual em cada tela, explicando pra que serve e como usar.',
+      '💀 Skeleton loading no Painel e no início do motorista, no lugar de "Carregando...".',
+      '🧾 Estrutura pronta (desativada) pra emissão de NFe — precisa contratar um provedor pra ativar de verdade.',
+    ],
+  },
+
+  {
     version: '4.5',
     date: '08/09/2026',
     items: [

@@ -10,6 +10,7 @@ import { useAdminRole, pageAllowed } from '../hooks/useAdminRole.js';
 import NewTripModal from '../components/NewTripModal.jsx';
 import PhotoLightbox from '../components/PhotoLightbox.jsx';
 import ResetPasswordButton from '../components/ResetPasswordButton.jsx';
+import { SkeletonKanbanCard } from '../components/Skeleton.jsx';
 
 const STAGE_LABELS = {
   apresentacao_base_origem: 'Apresentação na Base Origem',
@@ -22,6 +23,10 @@ const STAGE_LABELS = {
 // Etapas sequenciais do fluxo (exclui "parada_eventual", que é uma exceção
 // e não representa avanço no pipeline — ela vira um alerta no card, não uma coluna).
 const SEQUENTIAL_STAGES = ['apresentacao_base_origem', 'saida_base_origem', 'chegada_base_destino'];
+
+// As 4 etapas principais (fora Parada Eventual), usadas pra calcular a barra
+// de progresso "X de 4" no card, independente de ter paradas de entrega ou não.
+const MAIN_STAGES = ['apresentacao_base_origem', 'saida_base_origem', 'chegada_base_destino', 'fim_descarga'];
 
 const COLUMNS = [
   { key: 'assigned', title: 'Atribuídas', color: 'var(--assigned)' },
@@ -149,7 +154,8 @@ export default function AdminDashboard() {
         id, origin, destination, status, created_at, scheduled_date, planned_apresentacao_at, client_name, cargo_description, freight_value, internal_notes, signature_storage_path,
         drivers ( id, vehicle_plate, profiles ( full_name, phone ) ),
         routes ( planned_saida_after_hours, planned_chegada_after_hours ),
-        trip_stages ( id, status, recorded_at, latitude, longitude, photos ( id, storage_path ) )
+        trip_stages ( id, status, recorded_at, latitude, longitude, photos ( id, storage_path ) ),
+        trip_stops ( id, sequence, address, status )
       `)
       .or(
         showHistoryRef.current
@@ -357,6 +363,7 @@ export default function AdminDashboard() {
     const late = isLate(trip);
     const elapsedMins = minutesSince(lastStage ? lastStage.recorded_at : trip.created_at);
     const plannedTimes = computePlannedTimes(trip);
+    const mainStagesDone = MAIN_STAGES.filter((key) => stages.some((s) => s.status === key)).length;
 
     return (
       <div key={trip.id} className={`kanban-card status-${trip.status}${late ? ' is-late' : ''}`}>
@@ -364,12 +371,30 @@ export default function AdminDashboard() {
           <strong>{driverName}</strong>
           <span className="kanban-plate">{plate}</span>
           <div className="trip-substatus">{trip.origin} → {trip.destination}</div>
+          {trip.status !== 'assigned' && (
+            <div className="card-stops-progress" title={`${mainStagesDone} de 4 etapas concluídas`}>
+              <div className="stops-progress-bar">
+                <div className="stops-progress-fill" style={{ width: `${(mainStagesDone / MAIN_STAGES.length) * 100}%` }} />
+              </div>
+            </div>
+          )}
           {trip.client_name && <div className="trip-substatus">Cliente: {trip.client_name}</div>}
           {trip.freight_value != null && (
             <div className="trip-substatus">Frete: {Number(trip.freight_value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>
           )}
           {trip.internal_notes && (
             <div className="internal-note">🔒 {trip.internal_notes}</div>
+          )}
+          {trip.trip_stops?.length > 0 && (
+            <div className="card-stops-progress">
+              <div className="stops-progress-bar">
+                <div
+                  className="stops-progress-fill"
+                  style={{ width: `${(trip.trip_stops.filter((s) => s.status === 'concluida').length / trip.trip_stops.length) * 100}%` }}
+                />
+              </div>
+              <span>{trip.trip_stops.filter((s) => s.status === 'concluida').length}/{trip.trip_stops.length} paradas</span>
+            </div>
           )}
           <div className="trip-substatus">
             {lastStage
@@ -470,6 +495,13 @@ export default function AdminDashboard() {
             <div className="trip-actions">
               <button className="secondary-button" onClick={() => copyToClipboard(trip)}>Copiar texto</button>
               <button className="primary-button" onClick={() => sendToWhatsApp(trip)}>Enviar no WhatsApp</button>
+              <button
+                className="secondary-button"
+                title="Precisa contratar um provedor de NFe (ex: Focus NFe, eNotas) pra ativar"
+                onClick={() => toast('Emissão de NFe ainda não configurada — precisa contratar um provedor (Focus NFe, eNotas, etc.) e cadastrar aqui.', 'error')}
+              >
+                🧾 Emitir NFe
+              </button>
             </div>
           </div>
         )}
@@ -485,6 +517,13 @@ export default function AdminDashboard() {
         <span className={`rt-badge${isLive ? '' : ' rt-offline'}`}>
           <span className="rt-dot" /> {isLive ? 'Ao vivo' : 'Conectando...'}
         </span>
+        <button
+          className="secondary-button"
+          style={{ marginLeft: 12, fontSize: 12, verticalAlign: 'middle' }}
+          onClick={() => window.open('/tv', '_blank')}
+        >
+          📺 Modo TV
+        </button>
       </h1>
 
       <div className="cards">
@@ -507,7 +546,16 @@ export default function AdminDashboard() {
           </button>
         )}
       </div>
-      {loading && <p className="empty-state">Carregando...</p>}
+      {loading && (
+        <div className="kanban-board">
+          {[1, 2, 3, 4].map((col) => (
+            <div key={col} className="kanban-column">
+              <SkeletonKanbanCard />
+              <SkeletonKanbanCard />
+            </div>
+          ))}
+        </div>
+      )}
 
       {!loading && (
         <>

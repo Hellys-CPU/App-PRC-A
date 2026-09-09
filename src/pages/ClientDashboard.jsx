@@ -77,6 +77,19 @@ export default function ClientDashboard() {
     await supabase.auth.signOut();
   }
 
+  async function exportMyData() {
+    const bundle = { minhas_viagens: trips, exportado_em: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'meus-dados.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   async function submitRating(tripId, driverId, rating) {
     const { data: userData } = await supabase.auth.getUser();
     const { data: clientRow } = await supabase.from('clients').select('id').eq('auth_user_id', userData.user.id).maybeSingle();
@@ -103,6 +116,7 @@ export default function ClientDashboard() {
         <div className="admin-nav-brand"><Brand subtitle="Painel do Cliente" /></div>
         <div className="admin-nav-right">
           <ThemeToggle />
+          <button className="secondary-button" onClick={exportMyData}>⬇ Meus Dados</button>
           <button className="logout-button" onClick={handleLogout}>Sair</button>
         </div>
       </header>

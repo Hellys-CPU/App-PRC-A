@@ -5,6 +5,7 @@ import ThemeToggle from '../components/ThemeToggle.jsx';
 import Brand from '../components/Brand.jsx';
 import { useToast } from '../components/Toast.jsx';
 import { sendOrQueuePing, flushPingQueue, pendingPingCount } from '../lib/pingQueue.js';
+import { SkeletonBlock } from '../components/Skeleton.jsx';
 
 const STATUSES = [
   { key: 'apresentacao_base_origem', label: 'Apresentação na Base Origem', color: '#4f80b8' },
@@ -24,6 +25,7 @@ export default function DriverHome() {
   const [stages, setStages] = useState([]);
   const [profile, setProfile] = useState(null);
   const [trip, setTrip] = useState(null);
+  const [stops, setStops] = useState([]);
   const [loadingTrip, setLoadingTrip] = useState(true);
   const [undoing, setUndoing] = useState(false);
   const navigate = useNavigate();
@@ -123,9 +125,16 @@ export default function DriverHome() {
         if (!times[row.status]) times[row.status] = row.recorded_at;
       });
       setLastTimes(times);
+
+      const { data: stopsData } = await supabase
+        .from('trip_stops')
+        .select('id, status')
+        .eq('trip_id', tripData.id);
+      setStops(stopsData || []);
     } else {
       setStages([]);
       setLastTimes({});
+      setStops([]);
     }
   }
 
@@ -137,6 +146,28 @@ export default function DriverHome() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
+  }
+
+  async function exportMyData() {
+    const { data: userData } = await supabase.auth.getUser();
+    const uid = userData.user.id;
+
+    const [{ data: profileData }, { data: tripsData }, { data: ratingsData } ] = await Promise.all([
+      supabase.from('profiles').select('*').eq('id', uid).maybeSingle(),
+      supabase.from('trips').select('id, origin, destination, status, created_at, freight_value').eq('driver_id', uid),
+      supabase.from('driver_ratings').select('rating, comment, created_at').eq('driver_id', uid),
+    ]);
+
+    const bundle = { perfil: profileData, viagens: tripsData, avaliacoes: ratingsData, exportado_em: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'meus-dados.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 
   const doneStatuses = new Set(stages.filter((s) => ONE_TIME_STATUSES.includes(s.status)).map((s) => s.status));
@@ -178,7 +209,14 @@ export default function DriverHome() {
         </div>
       </header>
 
-      {loadingTrip && <p className="empty-state">Carregando...</p>}
+      {loadingTrip && (
+        <div style={{ padding: '0 4px' }}>
+          <SkeletonBlock height={50} style={{ marginBottom: 12 }} />
+          <SkeletonBlock height={70} style={{ marginBottom: 10 }} />
+          <SkeletonBlock height={70} style={{ marginBottom: 10 }} />
+          <SkeletonBlock height={70} />
+        </div>
+      )}
 
       {!loadingTrip && !trip && (
         <div className="no-trip-box">
@@ -205,17 +243,36 @@ export default function DriverHome() {
           <div className="status-buttons">
             {STATUSES.map((s) => {
               const isDone = doneStatuses.has(s.key);
+              const stopsBlocking = s.key === 'chegada_base_destino' && stops.length > 0 && stops.some((st) => st.status !== 'concluida');
               return (
-                <button
-                  key={s.key}
-                  className={`status-button${isDone ? ' status-done' : ''}`}
-                  style={{ backgroundColor: isDone ? undefined : s.color }}
-                  onClick={() => !isDone && navigate(`/camera/${s.key}`)}
-                  disabled={isDone}
-                >
-                  <span className="status-label">{isDone ? `✓ ${s.label}` : s.label}</span>
-                  <span className="status-time">{formatTime(lastTimes[s.key])}</span>
-                </button>
+                <React.Fragment key={s.key}>
+                  <button
+                    className={`status-button${isDone ? ' status-done' : ''}${stopsBlocking ? ' status-blocked' : ''}`}
+                    style={{ backgroundColor: isDone ? undefined : s.color }}
+                    onClick={() => !isDone && !stopsBlocking && navigate(`/camera/${s.key}`)}
+                    disabled={isDone || stopsBlocking}
+                  >
+                    <span className="status-label">
+                      {isDone ? `✓ ${s.label}` : stopsBlocking ? `🔒 ${s.label}` : s.label}
+                    </span>
+                    <span className="status-time">
+                      {stopsBlocking ? 'Conclua as paradas de entrega primeiro' : formatTime(lastTimes[s.key])}
+                    </span>
+                  </button>
+                  {s.key === 'saida_base_origem' && stops.length > 0 && (
+                    <button className="status-button stops-progress-button" onClick={() => navigate('/paradas')}>
+                      <span className="status-label">
+                        📍 Paradas de Entrega ({stops.filter((st) => st.status === 'concluida').length}/{stops.length})
+                      </span>
+                      <div className="stops-progress-bar">
+                        <div
+                          className="stops-progress-fill"
+                          style={{ width: `${(stops.filter((st) => st.status === 'concluida').length / stops.length) * 100}%` }}
+                        />
+                      </div>
+                    </button>
+                  )}
+                </React.Fragment>
               );
             })}
           </div>
@@ -231,8 +288,21 @@ export default function DriverHome() {
       <button className="history-link" onClick={() => navigate('/chat')} style={{ marginBottom: 10 }}>
         Falar com a Central
       </button>
+      {trip && (
+        <>
+          <button className="history-link" onClick={() => navigate('/checklist')} style={{ marginBottom: 10 }}>
+            Checklist de Saída do Veículo
+          </button>
+          <button className="history-link" onClick={() => navigate('/ocorrencia')} style={{ marginBottom: 10 }}>
+            Reportar Ocorrência / Avaria
+          </button>
+        </>
+      )}
       <button className="history-link" onClick={() => navigate('/historico')}>
         Ver Histórico Completo
+      </button>
+      <button className="history-link" onClick={exportMyData}>
+        ⬇ Baixar Meus Dados
       </button>
     </div>
   );
