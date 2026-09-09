@@ -1,6 +1,15 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '4.5',
+    date: '08/09/2026',
+    items: [
+      '🐛 Corrigido dropdown "Financeiro" que não aparecia: ele até abria, mas a barra de abas cortava ele por causa do scroll horizontal. Removido o corte.',
+      '🐛 Corrigida coluna "Contato" da tabela de Motoristas, que ficava esticada e empurrava os ícones pra longe do resto da linha.',
+    ],
+  },
+
+  {
     version: '4.4',
     date: '08/09/2026',
     items: [

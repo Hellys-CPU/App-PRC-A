@@ -273,10 +273,9 @@ input::placeholder, textarea::placeholder { color: var(--text-dim); }
   display: flex;
   gap: 4px;
   flex: 1;
-  overflow-x: auto;
-  scrollbar-width: none;
+  flex-wrap: wrap;
+  row-gap: 6px;
 }
-.admin-nav-tabs::-webkit-scrollbar { display: none; }
 .admin-nav-tab {
   padding: 8px 12px;
   font-size: 12px;
@@ -582,7 +581,7 @@ h2 {
   font-size: 12.5px;
 }
 .tabular-money { font-variant-numeric: tabular-nums; }
-.contact-cell { display: flex; gap: 12px; font-size: 16px; }
+.contact-cell { display: flex; gap: 12px; font-size: 16px; white-space: nowrap; width: 1%; }
 .contact-cell a { text-decoration: none; }
 
 /* ---------- Formulários (Motorista / Viagem) ---------- */
