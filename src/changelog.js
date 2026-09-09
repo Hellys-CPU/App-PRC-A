@@ -1,6 +1,14 @@
 // Histórico de versões do PRC App. Adicione um novo bloco no topo a cada leva de mudanças.
 export const CHANGELOG = [
   {
+    version: '5.1',
+    date: '09/09/2026',
+    items: [
+      '🗺️ Modo TV ganhou o mapa ao vivo que tinha ficado de fora — agora mostra números grandes + mapa + lista de viagens, tudo junto.',
+    ],
+  },
+
+  {
     version: '5.0',
     date: '08/09/2026',
     items: [
